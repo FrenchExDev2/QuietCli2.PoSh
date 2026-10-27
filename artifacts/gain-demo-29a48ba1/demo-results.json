@@ -1,0 +1,111 @@
+{
+  "Outcome": "Success",
+  "ExecutedAtUtc": "2026-10-27T22:10:33.6506188Z",
+  "FixtureOnly": true,
+  "DatabasePath": "C:\\code\\FrenchExDev\\FrenchExDev_i2\\PoSh\\FrenchExDev\\FrenchExDev.QuietCli.PoSh\\artifacts\\gain-demo-29a48ba1\\gain.sqlite3",
+  "HtmlPath": "C:\\code\\FrenchExDev\\FrenchExDev_i2\\PoSh\\FrenchExDev\\FrenchExDev.QuietCli.PoSh\\artifacts\\gain-demo-29a48ba1\\gain.html",
+  "BrowserOpened": true,
+  "BrowserError": null,
+  "ProgressEventsConsumed": 16000,
+  "DiagnosticEventsConsumed": 16000.0,
+  "Runs": [
+    {
+      "Fixture": "Generated-NoisyJob",
+      "RecordsPerStage": 1000,
+      "NativeSteps": 2,
+      "Prepared": 1000,
+      "Validated": 1000,
+      "JsonBytes": 533
+    },
+    {
+      "Fixture": "Generated-NoisyJob",
+      "RecordsPerStage": 2000,
+      "NativeSteps": 2,
+      "Prepared": 2000,
+      "Validated": 2000,
+      "JsonBytes": 533
+    },
+    {
+      "Fixture": "Generated-NoisyJob",
+      "RecordsPerStage": 5000,
+      "NativeSteps": 2,
+      "Prepared": 5000,
+      "Validated": 5000,
+      "JsonBytes": 534
+    },
+    {
+      "Fixture": "Native-Fixture json",
+      "Count": 3,
+      "NativeSteps": 1,
+      "JsonBytes": 334
+    }
+  ],
+  "Gain": {
+    "Estimator": "ceil(utf8_bytes/4)",
+    "Estimated": true,
+    "DatabasePath": "C:\\code\\FrenchExDev\\FrenchExDev_i2\\PoSh\\FrenchExDev\\FrenchExDev.QuietCli.PoSh\\artifacts\\gain-demo-29a48ba1\\gain.sqlite3",
+    "FromUtc": "2026-10-26T22:10:33.3936563Z",
+    "ToUtc": "2026-10-27T22:10:33.3936563Z",
+    "TrackingEnabled": true,
+    "LastTrackingError": null,
+    "GroupBy": "Command",
+    "Totals": {
+      "Deliveries": 4,
+      "NativeCalls": 7,
+      "MeasuredDeliveries": 4,
+      "UnmeasuredDeliveries": 0,
+      "FailedDeliveries": 0,
+      "AnalysisIncompleteDeliveries": 0,
+      "TruncatedDeliveries": 0,
+      "InputBytes": 3011066,
+      "OutputBytes": 1934,
+      "InputTokens": 752769,
+      "OutputTokens": 486,
+      "SavedTokens": 752283,
+      "SavingsPercent": 99.94,
+      "ByteReductionPercent": 99.94
+    },
+    "Groups": [
+      {
+        "Label": "task",
+        "Totals": {
+          "Deliveries": 3,
+          "NativeCalls": 6,
+          "MeasuredDeliveries": 3,
+          "UnmeasuredDeliveries": 0,
+          "FailedDeliveries": 0,
+          "AnalysisIncompleteDeliveries": 0,
+          "TruncatedDeliveries": 0,
+          "InputBytes": 3011055,
+          "OutputBytes": 1600,
+          "InputTokens": 752766,
+          "OutputTokens": 402,
+          "SavedTokens": 752364,
+          "SavingsPercent": 99.95,
+          "ByteReductionPercent": 99.95
+        }
+      },
+      {
+        "Label": "pwsh.exe",
+        "Totals": {
+          "Deliveries": 1,
+          "NativeCalls": 1,
+          "MeasuredDeliveries": 1,
+          "UnmeasuredDeliveries": 0,
+          "FailedDeliveries": 0,
+          "AnalysisIncompleteDeliveries": 0,
+          "TruncatedDeliveries": 0,
+          "InputBytes": 11,
+          "OutputBytes": 334,
+          "InputTokens": 3,
+          "OutputTokens": 84,
+          "SavedTokens": -81,
+          "SavingsPercent": -2700.0,
+          "ByteReductionPercent": -2936.36
+        }
+      }
+    ],
+    "TotalGroups": 2,
+    "OmittedGroups": 0
+  }
+}
