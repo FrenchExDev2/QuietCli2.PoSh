@@ -5,6 +5,10 @@ if (!('QuietCliStack.V1.NativeSession' -as [type])) {
     Add-Type -Path (Join-Path $PSScriptRoot 'NativeSession.cs') -ErrorAction Stop
 }
 $script:Tasks = [Collections.Generic.Stack[object]]::new()
+if (!('QuietCliStack.GainV1.Database' -as [type])) {
+    Add-Type -Path (Join-Path $PSScriptRoot 'GainStore.cs') -ErrorAction Stop
+}
+. (Join-Path $PSScriptRoot 'Gain.ps1')
 
 function Protect-QuietValue {
     param($Value, [hashtable]$State, [int]$Depth=0)
@@ -133,7 +137,9 @@ function ConvertTo-QuietJson {
         foreach ($p in $InputObject.Execution.PSObject.Properties) { $execution[$p.Name]=$p.Value }
         $safe=New-QuietResult -Summary $InputObject.Summary -Outcome $InputObject.Outcome -Data $InputObject.Data `
             -Execution $execution -ErrorInfo $InputObject.Error -Reasons @($InputObject.Truncation.Reasons) -MaxOutputBytes $MaxOutputBytes
-        ConvertTo-Json -InputObject $safe -Depth 24 -Compress
+        $json=ConvertTo-Json -InputObject $safe -Depth 24 -Compress
+        Save-QuietGain $InputObject $json
+        $json
     }
 }
 
@@ -182,8 +188,10 @@ function Invoke-QuietCli {
             } catch { $failedParser=$true }
         }
     } catch {
-        return New-QuietResult -Summary 'Companion execution failed.' -Outcome Failed `
+        $result=New-QuietResult -Summary 'Companion execution failed.' -Outcome Failed `
             -Execution @{ExitCode=$null;AnalysisComplete=$false} -ErrorInfo @{Code='ExecutionFailed'} -MaxOutputBytes $MaxOutputBytes
+        Set-QuietNativeGain $result $FilePath $null
+        return $result
     } finally { if ($session) { $session.Dispose() } }
     $reasons=@(); $code=$null; $outcome='Success'
     if ($capture.TimedOut) { $outcome='Timeout';$code='Timeout' }
@@ -193,13 +201,20 @@ function Invoke-QuietCli {
     elseif (!$streaming -and $capture.CaptureTruncated) { $outcome='Failed';$code='CaptureLimit';$reasons=@('CaptureLimit') }
     elseif ($capture.ExitCode -notin $SuccessExitCodes) { $outcome='Failed';$code='NativeFailed' }
     $execution=@{ExitCode=$capture.ExitCode;ElapsedMs=$capture.ElapsedMs;AnalysisComplete=($outcome -eq 'Success');
-        StdoutCharacters=$capture.StdoutCharacters;StderrCharacters=$capture.StderrCharacters;LostRecords=$capture.LostRecords}
-    New-QuietResult -Summary $Summary -Outcome $outcome -Data $data -Execution $execution `
+        StdoutCharacters=$capture.StdoutCharacters;StderrCharacters=$capture.StderrCharacters;LostRecords=$capture.LostRecords;
+        StdoutBytes=$capture.StdoutBytes;StderrBytes=$capture.StderrBytes;SourceComplete=$capture.SourceComplete}
+    $result=New-QuietResult -Summary $Summary -Outcome $outcome -Data $data -Execution $execution `
         -ErrorInfo $(if ($code) { @{Code=$code} } else { $null }) -Reasons $reasons -MaxOutputBytes $MaxOutputBytes
+    Set-QuietNativeGain $result $FilePath $capture
+    $result
 }
 
 function Add-QuietStep {
     param($Task, $Result, [string]$Name)
+    $gain=$null
+    if ($script:GainResults.TryGetValue($Result,[ref]$gain)) {
+        foreach ($source in $gain.Sources.Values) { $Task.Sources[$source.Id]=$source }
+    }
     $seen=$null
     if ($Task.Seen.TryGetValue($Result,[ref]$seen)) { return }
     $Task.Seen.Add($Result,[object]::new()); $Task.Steps++
@@ -240,7 +255,8 @@ function Invoke-QuietTask {
     $ProgressPreference='SilentlyContinue'
     $watch=[Diagnostics.Stopwatch]::StartNew()
     $task=@{Steps=0;Failed=0;Timeouts=0;Unsupported=0;Truncated=0;ScriptErrors=0;Budget=$MaxOutputBytes;
-        Seen=[Runtime.CompilerServices.ConditionalWeakTable[object,object]]::new();Issues=[Collections.Generic.List[object]]::new()}
+        Seen=[Runtime.CompilerServices.ConditionalWeakTable[object,object]]::new();Issues=[Collections.Generic.List[object]]::new();
+        Sources=[Collections.Generic.Dictionary[string,object]]::new()}
     $projection=[Collections.Generic.List[object]]::new();$produced=0L
     $script:Tasks.Push($task)
     try {
@@ -270,7 +286,8 @@ function Invoke-QuietTask {
             Unsupported=$task.Unsupported;Truncated=$task.Truncated;ScriptErrors=$task.ScriptErrors} `
         -ErrorInfo $(if ($outcome -ne 'Success') {@{Code='TaskFailed';Issues=$task.Issues.ToArray()}} else {$null}) `
         -Reasons $reasons -MaxOutputBytes $MaxOutputBytes
+    Set-QuietGainSources $result $task.Sources 'task'
     if ($AsJson) { ConvertTo-QuietJson $result -MaxOutputBytes $MaxOutputBytes } else { $result }
 }
 
-Export-ModuleMember -Function New-QuietResult,Invoke-QuietCli,Invoke-QuietTask,Invoke-QuietStep,ConvertTo-QuietJson
+Export-ModuleMember -Function New-QuietResult,Invoke-QuietCli,Invoke-QuietTask,Invoke-QuietStep,ConvertTo-QuietJson,QuietCliGain

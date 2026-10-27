@@ -6,7 +6,7 @@ param([Parameter(Mandatory)][string]$PythonImage,
       [ValidateRange(1,100000)][int]$Records=2000,
       [ValidateRange(1024,65536)][int]$MaxOutputBytes=2048)
 $ErrorActionPreference='Stop'
-Import-Module (Join-Path $QuietCliRoot 'QuietCli.PoSh.psd1') -ErrorAction Stop
+Import-Module (Join-Path $QuietCliRoot 'FrenchExDev.QuietCli.PoSh.psd1') -ErrorAction Stop
 $fixtures=[IO.Path]::GetFullPath((Join-Path $QuietCliRoot 'fixtures'))
 # Adapter for machines without host Python: use the original Python fixture and
 # the supplied companion's event reduction/completion rules. Only execution is

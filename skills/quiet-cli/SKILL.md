@@ -19,7 +19,7 @@ This document contains the agent instructions. Downloading `SKILL.md` alone does
 
 ```powershell
 $moduleRoot = 'C:/tools/QuietCli'
-Import-Module (Join-Path $moduleRoot 'QuietCli.PoSh.psd1') -ErrorAction Stop
+Import-Module (Join-Path $moduleRoot 'FrenchExDev.QuietCli.PoSh.psd1') -ErrorAction Stop
 ```
 
 All relative module links below resolve inside the complete ZIP and source tree. There are no separate skill-local `scripts/` or `references/` dependencies.
@@ -48,7 +48,17 @@ The default final limit is **4096 UTF-8 bytes**, not tokens. Use **2048 bytes** 
 
 ## Write a task
 
-Use the five public functions defined by the [root manifest](../../FrenchExDev.QuietCli.PoSh.psd1): `Invoke-QuietCli`, `New-QuietResult`, `Invoke-QuietStep`, `Invoke-QuietTask` and `ConvertTo-QuietJson`. The [implementation](../../src/QuietCli.psm1) defines the exact parameters and limit behavior.
+Use the six public functions defined by the [root manifest](../../FrenchExDev.QuietCli.PoSh.psd1): `Invoke-QuietCli`, `New-QuietResult`, `Invoke-QuietStep`, `Invoke-QuietTask`, `ConvertTo-QuietJson` and `QuietCliGain`. The [implementation](../../src/QuietCli.psm1) defines the exact parameters and limit behavior.
+
+### Gain history
+
+Serialized native results are recorded in SQLite, by default at `~/.quietcli/gain.sqlite3`; `QUIETCLI_DB_PATH` overrides the path. `Invoke-QuietTask -AsJson` records one final delivery for its unique native sources. Intermediate objects are not deliveries; a standalone native result counts when serialized with `ConvertTo-QuietJson`. Re-serializing the same result does not add another record. Nested native child processes inherit `QUIETCLI_TRACKING=0` so they do not independently record a delivery already observed by the parent.
+
+`QuietCliGain -Days 7` displays text; `-View Chart` adds terminal bars, `-View Object` or `-View Json` provides data, and `-View Html -OutputPath ./gain.html` writes a standalone SVG dashboard. Use `-From` and `-To` for a start-inclusive, end-exclusive period; grouping uses UTC. `-MaxItems` limits groups without changing period totals.
+
+Add `-Browse` to the HTML command to open the saved report in the default browser. This switch requires `-View Html`; the command still returns the absolute file path. Browser launch errors preserve the generated HTML and identify its path.
+
+The estimator matches RTK: `ceil(UTF-8 bytes / 4)` for both native streams and for the entire final JSON. Signed savings preserve expansion. Unknown baselines are counted as unmeasured and excluded from token totals. Failure and truncation counters remain visible. This measures estimated command-output reduction, not total agent cost or provider billing. Only numeric counters and executable basenames are stored, not arguments or logs. Set `QUIETCLI_TRACKING=0` to disable recording. A tracking write failure leaves the business envelope unchanged; inspect `LastTrackingError` in `QuietCliGain -View Object`. The system SQLite library is required for history; no SQLite CLI or third-party PowerShell module is needed.
 
 This small example obtains the current branch. Empty successful output denotes detached HEAD; the official [Git branch documentation](https://git-scm.com/docs/git-branch) defines `--show-current`.
 

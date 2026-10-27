@@ -6,7 +6,7 @@ param([Parameter(Mandatory)][string]$Repository,
       [ValidateRange(1024,65536)][int]$MaxOutputBytes=2048)
 $ErrorActionPreference='Stop'
 $QuietCliRoot=[IO.Path]::GetFullPath($QuietCliRoot)
-Import-Module (Join-Path $QuietCliRoot 'QuietCli.PoSh.psd1') -ErrorAction Stop
+Import-Module (Join-Path $QuietCliRoot 'FrenchExDev.QuietCli.PoSh.psd1') -ErrorAction Stop
 $repo=[IO.Path]::GetFullPath($Repository)
 # Reuse the supplied companion in a separate process. The outer task consumes its
 # envelope as data, checks it, and records it as a step before using its fields.

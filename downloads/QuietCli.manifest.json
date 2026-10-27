@@ -1,10 +1,10 @@
 {
   "SchemaVersion": 1,
-  "ModuleVersion": "0.1.0",
+  "ModuleVersion": "0.2.0",
   "Repository": "https://github.com/FrenchExDev/FrenchExDev",
   "ModulePath": "PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh",
   "SourceRef": "develop",
-  "SourceCommitBase": "1cac1bd8ceb1ecb88d30b181e59839f4d960a4dc",
+  "SourceCommitBase": "f64c72e80e4e850680ab8d5384c81bf039c81c6b",
   "SourceKind": "WorkingTreeFiles; identify the packaged contents by their SHA256 hashes",
   "Files": [
     {
@@ -13,19 +13,19 @@
     },
     {
       "Path": "examples/Generated-GitOverview.ps1",
-      "SHA256": "1428bbed7dfd2e90b0c5317825617f13097992897b9265b86dbeb2255bd157b8"
+      "SHA256": "00291e8f76791dae4b25442d2987963c48f05b237c1a82cde962470876c29354"
     },
     {
       "Path": "examples/Generated-NoisyJob.ps1",
-      "SHA256": "f42a470a75074410f278a632f94556b871d09d84b93d3246f29240c14f485dd3"
+      "SHA256": "282e05212c75d6c8d6673c6f66261e6e0ce42a057e7f25de6f29287fdf395d4a"
     },
     {
       "Path": "examples/Invoke-NoisyJobContainer.ps1",
-      "SHA256": "4ba8f2c49ee9c525f4eb1196b0af5a1d0c42dbb8ec46e8f849d5de6fb434fbea"
+      "SHA256": "974a5b51837222e0bf31b99fceb774d0ff8f236f70f43d2acaeb16b6a2a91392"
     },
     {
       "Path": "examples/Invoke-RepositoryDecision.ps1",
-      "SHA256": "b882f6665ae0d9815e21c578ee4af53aba3fe2d17072aa732c6d2c42f5243cc3"
+      "SHA256": "b1f7cba1f82590bb113672358a983cbdf2ddd868abbbaeef7b335aee2223e6b1"
     },
     {
       "Path": "examples/Native-Fixture.ps1",
@@ -36,24 +36,28 @@
       "SHA256": "5493c15c99d13d44612e27ae067e5382f17e508d9bb7c094cfa9a13d1653aa18"
     },
     {
-      "Path": "QuietCli.PoSh.psd1",
-      "SHA256": "ef27b65c6147b6bcee34a5945485d1763eca55d98acd4054f8e4bbd3dc5a7425"
+      "Path": "FrenchExDev.QuietCli.PoSh.psd1",
+      "SHA256": "cdf11bfd5d9f4f6d486ea0ec43d48db420ce8751dd5523ffc05b3508b83e85b6"
     },
     {
-      "Path": "QuietCli.PoSh.psm1",
+      "Path": "FrenchExDev.QuietCli.PoSh.psm1",
       "SHA256": "51314ede68b335197dbe7a2e425787ff38ec8d9f2afebf09d6467d90674495ed"
     },
     {
+      "Path": "LICENSE",
+      "SHA256": "883a68cb88770418c2a2d3ff96fad44345bbb8d77457f761549705a085f48e9e"
+    },
+    {
       "Path": "README.md",
-      "SHA256": "b5960c93c3063b5c91b95287faa71988c1cc9a9ccd9c2e5221ff44d7b6a1a9f3"
+      "SHA256": "2bdccfc862546cde4bd91b5932b3347c9f76695862791bff606bbc84664cfc1c"
     },
     {
       "Path": "scripts/Invoke-Examples.ps1",
-      "SHA256": "b991c65c78ec29e499de81015611ec588507f2804f49635c86b1e47edd9ff1f4"
+      "SHA256": "6fe770a780563bcced3c7e506367ce2bb32665e6c1c7086615b0c5bbdd7b6af1"
     },
     {
       "Path": "scripts/New-QuietCliArchive.ps1",
-      "SHA256": "a4061bf505504fc8fa1f8e533d9ea36a9ea14086f628ab5ffbe313860b80e66b"
+      "SHA256": "d51c0a32039c8260dae6fa328d963026651c640e233dc3b1e38509ec1671df51"
     },
     {
       "Path": "skills/quiet-cli/agents/openai.yaml",
@@ -61,27 +65,39 @@
     },
     {
       "Path": "skills/quiet-cli/SKILL.md",
-      "SHA256": "99a7c2c609ae339d294f2ff9e1f8380b278da44b7d8a639b022d3e45fbd83405"
+      "SHA256": "a26bb6c079d52aca8eab86c1ecd435ccbb310bee16f9aa7f3fa61c8b74bb5301"
+    },
+    {
+      "Path": "src/Gain.ps1",
+      "SHA256": "c3289b44230ad5a9c98b54eff67d4c0d4157c2b3a671345dc1a87ea7be8af987"
+    },
+    {
+      "Path": "src/GainStore.cs",
+      "SHA256": "bcb83a365798050ff6865f627e7d018a96289c92208b996edf50c790542db61c"
     },
     {
       "Path": "src/NativeSession.cs",
-      "SHA256": "ca552e24bac1a140f8fed4a54892dc58607fb298fe1a4bc34982209d6f2016d1"
+      "SHA256": "81befabd9ebe837fa378dda5ab604c82e43cce56cc50a2cab62e8b8f78aed2d2"
     },
     {
       "Path": "src/QuietCli.psd1",
-      "SHA256": "1c14bf4b56942c34987bca135c67987af29063feba17fb709d8c5957108822ad"
+      "SHA256": "3e0f0eb7d508ae7c6149514293b45602b8f4254bc563d40683681ad2e1962193"
     },
     {
       "Path": "src/QuietCli.psm1",
-      "SHA256": "7cd0e91b5dbfae5b32ae856d0aa3f76b8f8cad69d634bd0f9e80ea8856f68812"
+      "SHA256": "d843c348de16e1798b94438eaa940b4b6b76d32d0be917f0fa74fcc2776d9c4a"
+    },
+    {
+      "Path": "test/Gain.Tests.ps1",
+      "SHA256": "3fd1b9c0b4e668b890dc76601d252e3b8fb0fb64658e08afefbca85ef8775d1b"
     },
     {
       "Path": "test/Invoke-Tests.ps1",
-      "SHA256": "b3dcd7e067c8e59fdd8fac675a43b97cd510b791d6b58a3e8d52c3f14aba4643"
+      "SHA256": "46f9e294c94f8d77b9ee90403ce4d543e8b96459d83215f098d7b87bf10e73bf"
     },
     {
       "Path": "test/Smoke.Tests.ps1",
-      "SHA256": "5125717cf5ac671caf618d781127dd734856a9703907c216041099818db7f0ba"
+      "SHA256": "7720e4ec79ad9db65056a908029eed4d742c0e86f4942569de8501405eb3f5cd"
     },
     {
       "Path": "test/test_examples.py",
@@ -100,6 +116,14 @@
       "SHA256": "dcdf00e48afcf56b7a681fbee825bde716ac73e1c9f8d9414089bb42bb06e9ab"
     },
     {
+      "Path": "verification/gain-example.html",
+      "SHA256": "88298d68d419502df0721d041b608f535d54108f6febbacf213ba431785d2a62"
+    },
+    {
+      "Path": "verification/gain-release-tests.json",
+      "SHA256": "13d58bf6ab8b9bf78b1c99b36d09b7b267dd71e5e260d19ef8ffaedad58ef2a1"
+    },
+    {
       "Path": "verification/linux-tests.json",
       "SHA256": "826ed0fc7c72f6d272fc265749ee0468b58fed497e5d261f231fbd5699050f74"
     },
@@ -116,5 +140,5 @@
       "SHA256": "d312de51b33e52f893487f448a5903e28af911839a6229bfb3fe77992da5948e"
     }
   ],
-  "ArchiveSHA256": "a39188e96ed60ce5658bd8f65b4903abf8368c5a7a996b47a538f9298fad7f9b"
+  "ArchiveSHA256": "27e152978215ea259a349e0f7765a651d9c0dd1581d00bbefd8341c86d4ec52f"
 }

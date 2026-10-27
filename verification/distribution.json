@@ -1,29 +1,54 @@
 {
   "Outcome": "Success",
-  "CheckedDate": "2026-10-14",
-  "ExecutedAtUtc": "2026-10-14T02:09:17.1239268Z",
-  "ArchiveSHA256": "a39188e96ed60ce5658bd8f65b4903abf8368c5a7a996b47a538f9298fad7f9b",
-  "FilesVerified": 27,
-  "ExtractedDocumentationLinks": 31,
-  "ExtractedRuntimeChecksPassed": 14,
-  "ExtractedRuntimeChecksFailed": 0,
+  "ModuleVersion": "0.2.0",
+  "ExecutedAtUtc": "2026-10-27T22:05:45.2451059Z",
+  "ArchiveSHA256": "27e152978215ea259a349e0f7765a651d9c0dd1581d00bbefd8341c86d4ec52f",
+  "FilesVerified": 33,
+  "ExtractedBrowseParameterVerified": true,
+  "ExtractedHtmlGenerationVerified": true,
   "ReproducibleArchive": true,
-  "Windows": {
-    "IntegrationPassed": 5,
-    "BashSkipped": 2,
-    "Python": "3.13.16",
-    "SmokePassed": 24,
-    "PowerShell": "7.6.6"
-  },
-  "Linux": {
-    "Skipped": 0,
-    "IntegrationPassed": 7,
-    "Python": "3.13.5",
-    "SmokePassed": 24,
-    "PowerShell": "7.4.20"
-  },
   "SourceHashesVerified": true,
-  "WorkflowYamlValidated": true,
+  "WindowsSuites": [
+    {
+      "Name": "Smoke",
+      "Outcome": "Success",
+      "Passed": 24,
+      "Failed": 0,
+      "Skipped": 0,
+      "Error": null,
+      "Details": []
+    },
+    {
+      "Name": "Gain",
+      "Outcome": "Success",
+      "Passed": 19,
+      "Failed": 0,
+      "Skipped": 0,
+      "Error": null,
+      "Details": []
+    },
+    {
+      "Name": "Integration",
+      "Outcome": "Success",
+      "Passed": 5,
+      "Failed": 0,
+      "Skipped": 2,
+      "Error": null,
+      "Details": [
+        {
+          "Name": "Bash reducer matches the selected Git counts",
+          "Skipped": true,
+          "Reason": "Requires POSIX; covered on Linux"
+        },
+        {
+          "Name": "Bash native failure emits one structured result",
+          "Skipped": true,
+          "Reason": "Requires POSIX; covered on Linux"
+        }
+      ]
+    }
+  ],
+  "LinuxValidationRun": false,
   "GitHubWorkflowExecuted": false,
   "RemoteGitHubAvailabilityVerified": false
 }

@@ -11,9 +11,9 @@ $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath($ModuleRoot)
 if (!$OutputDirectory) { $OutputDirectory = Join-Path $root 'downloads' }
 $output = [IO.Path]::GetFullPath($OutputDirectory)
-$version = (Import-PowerShellDataFile (Join-Path $root 'QuietCli.PoSh.psd1')).ModuleVersion
+$version = (Import-PowerShellDataFile (Join-Path $root 'FrenchExDev.QuietCli.PoSh.psd1')).ModuleVersion
 $paths = [Collections.Generic.List[string]]::new()
-foreach ($name in @('QuietCli.PoSh.psd1', 'QuietCli.PoSh.psm1', 'README.md')) {
+foreach ($name in @('FrenchExDev.QuietCli.PoSh.psd1', 'FrenchExDev.QuietCli.PoSh.psm1', 'README.md', 'LICENSE')) {
     if (!(Test-Path -LiteralPath (Join-Path $root $name) -PathType Leaf)) { throw "Missing package file: $name" }
     $paths.Add($name)
 }

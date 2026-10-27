@@ -33,6 +33,11 @@ $result=Invoke-QuietTask -MaxOutputBytes 8192 {
     if ($RuntimeOnly) { $arguments+=@('-RuntimeOnly') }
     $smoke=Invoke-QuietStep smoke { Invoke-TestSuite -Executable $pwsh -Arguments $arguments -Name 'Smoke' }
     $suites.Add(@{Name='Smoke';Result=$smoke})
+    $gain=Invoke-QuietStep gain {
+        Invoke-TestSuite -Executable $pwsh -Arguments @('-NoLogo','-NoProfile','-NonInteractive','-File',
+            (Join-Path $PSScriptRoot 'Gain.Tests.ps1')) -Name 'Gain'
+    }
+    $suites.Add(@{Name='Gain';Result=$gain})
     if (!$RuntimeOnly -and $smoke.Outcome -eq 'Success') {
         $integration=Invoke-QuietStep integration {
             Invoke-TestSuite -Executable $Python -Arguments @((Join-Path $PSScriptRoot 'test_examples.py'),'--pwsh',$pwsh) -Name 'Integration'
@@ -52,7 +57,8 @@ $result=Invoke-QuietTask -MaxOutputBytes 8192 {
             Details=@($checks | Where-Object { ($_.PSObject.Properties['Passed'] -and !$_.Passed) -or $_.PSObject.Properties['Skipped'] })}
     })
     $hashes=[ordered]@{}
-    foreach ($file in @('src/QuietCli.psm1','src/NativeSession.cs','test/Smoke.Tests.ps1','test/test_examples.py','test/Invoke-Tests.ps1','examples/Generated-GitOverview.ps1')) {
+    foreach ($file in @('src/QuietCli.psm1','src/NativeSession.cs','src/Gain.ps1','src/GainStore.cs',
+        'test/Gain.Tests.ps1','test/Smoke.Tests.ps1','test/test_examples.py','test/Invoke-Tests.ps1','examples/Generated-GitOverview.ps1')) {
         $hashes[$file]=(Get-FileHash -LiteralPath (Join-Path $moduleRoot $file) -Algorithm SHA256).Hash
     }
     [pscustomobject]@{Platform=[Environment]::OSVersion.Platform.ToString();PowerShell=$PSVersionTable.PSVersion.ToString()

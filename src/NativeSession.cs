@@ -15,8 +15,8 @@ namespace QuietCliStack.V1 {
     public sealed class Capture {
         public string Stdout = "", Stderr = "", StartError = "";
         public int? ExitCode;
-        public bool TimedOut, CaptureTruncated;
-        public long StdoutCharacters, StderrCharacters, LostRecords, ElapsedMs;
+        public bool TimedOut, CaptureTruncated, SourceComplete;
+        public long StdoutCharacters, StderrCharacters, StdoutBytes, StderrBytes, LostRecords, ElapsedMs;
     }
     // Only native readers run in background tasks. PowerShell callbacks run on the caller's thread.
     public sealed class NativeSession : IDisposable {
@@ -28,6 +28,7 @@ namespace QuietCliStack.V1 {
         readonly bool streaming;
         readonly int captureLimit, recordLimit;
         readonly char delimiter;
+        bool stdoutComplete, stderrComplete;
         public Capture Result { get; } = new();
 
         public NativeSession(string executable, string[] arguments, string directory,
@@ -40,6 +41,9 @@ namespace QuietCliStack.V1 {
                 RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true,
                 StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8
             };
+            // A companion launched by another companion must not record the same
+            // delivery independently. The parent measures its direct child's output.
+            process.StartInfo.Environment["QUIETCLI_TRACKING"] = "0";
             foreach (string arg in arguments) process.StartInfo.ArgumentList.Add(arg);
             try { process.Start(); process.StandardInput.Close(); }
             catch (Exception e) {
@@ -57,10 +61,16 @@ namespace QuietCliStack.V1 {
         }
         async Task DrainAsync(StreamReader reader, string stream) {
             var buffer = new char[4096]; var text = new StringBuilder();
+            // Keep an encoder per stream: a surrogate pair can straddle two reads.
+            // Count the entire decoded UTF-8 text, including delimiters and discarded records.
+            var encoder = Encoding.UTF8.GetEncoder();
+            var encoded = new byte[Encoding.UTF8.GetMaxByteCount(buffer.Length)];
             long length = 0; int count;
             while ((count = await reader.ReadAsync(buffer.AsMemory(), cancel.Token).ConfigureAwait(false)) > 0) {
-                if (stream == "stdout") Result.StdoutCharacters += count;
-                else Result.StderrCharacters += count;
+                encoder.Convert(buffer, 0, count, encoded, 0, encoded.Length, false,
+                    out int consumed, out int bytes, out bool converted);
+                if (stream == "stdout") { Result.StdoutCharacters += count; Result.StdoutBytes += bytes; }
+                else { Result.StderrCharacters += count; Result.StderrBytes += bytes; }
                 if (!streaming) {
                     int limit = stream == "stdout" ? captureLimit : Math.Min(captureLimit, 32768);
                     int keep = Math.Min(count, Math.Max(0, limit - text.Length));
@@ -76,6 +86,10 @@ namespace QuietCliStack.V1 {
                     }
                 }
             }
+            encoder.Convert(Array.Empty<char>(), 0, 0, encoded, 0, encoded.Length, true,
+                out int remainingCharacters, out int remainingBytes, out bool flushed);
+            if (stream == "stdout") { Result.StdoutBytes += remainingBytes; stdoutComplete = true; }
+            else { Result.StderrBytes += remainingBytes; stderrComplete = true; }
             if (streaming && length > 0) await PublishAsync(stream, text, length).ConfigureAwait(false);
             if (!streaming) {
                 if (stream == "stdout") Result.Stdout = text.ToString();
@@ -106,6 +120,7 @@ namespace QuietCliStack.V1 {
                 catch (InvalidOperationException) { }
                 if (!streaming) Result.CaptureTruncated = Result.StdoutCharacters > Result.Stdout.Length ||
                                                          Result.StderrCharacters > Result.Stderr.Length;
+                Result.SourceComplete = stdoutComplete && stderrComplete && !Result.TimedOut && Result.StartError.Length == 0;
                 Result.ElapsedMs = watch.ElapsedMilliseconds;
                 queue.CompleteAdding();
             }

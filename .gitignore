@@ -1,0 +1,5 @@
+*.sqlite3
+*.sqlite3-*
+*.sqlite
+*.sqlite-*
+quietcli-gain.html

@@ -55,7 +55,7 @@ jobs:
           docker run --rm \
             -e MODULE_DIR -v "$GITHUB_WORKSPACE:/src" -v "$RUNNER_TEMP/out:/out" -w /src \
             mcr.microsoft.com/dotnet/sdk:8.0-alpine \
-            sh -c 'apk add --no-cache git python3 bash jq gawk coreutils >/dev/null &&
+            sh -c 'apk add --no-cache git python3 bash jq gawk coreutils sqlite-libs >/dev/null &&
                    git config --global --add safe.directory "*" &&
                    pwsh -NoLogo -NoProfile -File ./$MODULE_DIR/test/Invoke-Tests.ps1 -Python python3 -OutputPath /out/quietcli-tests.json'
         env:

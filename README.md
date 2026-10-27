@@ -14,9 +14,9 @@ git branch + git status
 The agent has the facts it needs to decide.
 ```
 
-**5 public functions · Bounded UTF-8 JSON · Composable tasks · MIT license**
+**6 public functions · Bounded UTF-8 JSON · Composable tasks · SQLite gain history · MIT license**
 
-[Get started](#get-started) · [Load at startup](#load-quietcli-when-pwsh-starts) · [Git example](#practical-example-inspect-a-git-repository) · [Write a companion](#write-your-first-companion) · [API](#the-five-public-functions) · [Troubleshooting](#troubleshooting)
+[Get started](#get-started) · [Load at startup](#load-quietcli-when-pwsh-starts) · [Git example](#practical-example-inspect-a-git-repository) · [Write a companion](#write-your-first-companion) · [Gain](#track-savings-with-quietcligain) · [API](#the-six-public-functions) · [Troubleshooting](#troubleshooting)
 
 ## Why QuietCli?
 
@@ -40,6 +40,7 @@ The `.Data` property is freely defined: a domain object, an array, a scalar, or 
 | **PowerShell 7.4+ Core**, the `pwsh` executable | For the module and PowerShell companions. Windows PowerShell 5.1 is not supported. |
 | **Git** on the `PATH` | For the Git examples. |
 | **Python 3** | For the noisy demonstration and the full integration suite. |
+| System SQLite library | For gain history: `winsqlite3.dll` on Windows, `libsqlite3` on Linux/macOS. No SQLite CLI is required. |
 | Bash, awk, jq, and GNU `timeout` | For the Bash companion and its Linux checks. |
 
 The PowerShell module has no third-party module dependencies. Its C# code loads on import; no separate .NET SDK installation is required. You can use any text editor.
@@ -53,7 +54,7 @@ $moduleRoot = 'C:/code/FrenchExDev/FrenchExDev_i2/PoSh/FrenchExDev/FrenchExDev.Q
 $moduleRoot = (Resolve-Path -LiteralPath $moduleRoot -ErrorAction Stop).Path
 $moduleManifest = Join-Path $moduleRoot 'FrenchExDev.QuietCli.PoSh.psd1'
 Import-Module $moduleManifest -ErrorAction Stop
-Get-Command New-QuietResult, Invoke-QuietCli, Invoke-QuietTask, Invoke-QuietStep, ConvertTo-QuietJson
+Get-Command New-QuietResult, Invoke-QuietCli, Invoke-QuietTask, Invoke-QuietStep, ConvertTo-QuietJson, QuietCliGain
 ```
 
 Adjust the first line to your checkout location. The checkout uses the **`FrenchExDev.QuietCli.PoSh.psd1`** manifest. Older archives may still use `QuietCli.PoSh.psd1`; the next block supports both names.
@@ -75,7 +76,7 @@ if (!(Test-Path -LiteralPath $moduleManifest)) {
     $moduleManifest = Join-Path $moduleRoot 'QuietCli.PoSh.psd1'
 }
 Import-Module $moduleManifest -ErrorAction Stop
-Get-Command New-QuietResult, Invoke-QuietCli, Invoke-QuietTask, Invoke-QuietStep, ConvertTo-QuietJson
+Get-Command New-QuietResult, Invoke-QuietCli, Invoke-QuietTask, Invoke-QuietStep, ConvertTo-QuietJson, QuietCliGain
 ```
 
 The ZIP includes the runtime, skill, examples, fixtures, and verification launcher. Keep its `package-manifest.json` and the [distribution manifest](downloads/QuietCli.manifest.json), which identify the contents using SHA-256 hashes. The checkout README and the README in a previously generated archive may correspond to different revisions.
@@ -275,7 +276,73 @@ Use `-Python python` or the absolute path to Python 3 if needed. For 2,000 items
 
 The [supplied measurement](verification/demo-measurements.json) reports **4,000 progress events and 4,000 diagnostics consumed**, followed by a final JSON document of **533 bytes**, excluding the newline. This observation was recorded with PowerShell 7.4.20; the size can vary, particularly with execution time. It does not measure total token or financial savings.
 
-## The five public functions
+## Track savings with QuietCliGain
+
+QuietCli records **serialized deliveries** in a local SQLite database. Existing companions using `Invoke-QuietTask -AsJson` are tracked automatically. When working with objects, pass the final result to `ConvertTo-QuietJson` to record a delivery; intermediate objects are not counted.
+
+The default database is **`~/.quietcli/gain.sqlite3`**. Override it with **`QUIETCLI_DB_PATH`**, optionally in your PowerShell profile before importing the module:
+
+```powershell
+$env:QUIETCLI_DB_PATH = Join-Path $HOME '.quietcli/team-work.sqlite3'
+```
+
+The directory and schema are created on the first tracked delivery. The variable is read on each call, so changing it takes effect immediately. Prefer an absolute path; `~/` is expanded and relative paths resolve against the current PowerShell directory. History is retained until you manage or remove the database. The database stores timestamps, executable basenames or `task`, outcomes, durations, and numeric counters. It does not store command arguments, working directories, raw logs, or domain data.
+
+### Choose a period and view
+
+```powershell
+# Text summary for the last seven days, grouped by UTC day.
+QuietCliGain
+
+# A signed bar chart in the terminal for the last 30 days.
+QuietCliGain -Days 30 -View Chart
+
+# Totals and the largest command groups for an explicit UTC period.
+QuietCliGain -From '2026-10-01T00:00:00Z' -To '2026-11-01T00:00:00Z' `
+    -GroupBy Command -MaxItems 20
+
+# A standalone HTML report with a graphical SVG chart. Open the returned path.
+QuietCliGain -Days 30 -View Html -OutputPath ./quietcli-gain.html
+
+# Generate the report and open it in your default browser.
+QuietCliGain -Days 30 -View Html -OutputPath ./quietcli-gain.html -Browse
+
+# Structured data for your own automation, or -View Json for JSON output.
+$gain = QuietCliGain -Days 30 -View Object
+$gain.Totals.SavedTokens
+```
+
+Periods are **start-inclusive and end-exclusive**: `From <= timestamp < To`. `-Days` is a rolling window ending now; it cannot be combined with `-From`/`-To`. `-To` defaults to now when `-From` is supplied. Grouping by `Day` uses UTC and retains the latest days; grouping by `Command` orders groups by the absolute number of saved tokens, so large expansions are visible too.
+
+`-MaxItems` defaults to 31 displayed groups. **Totals always cover the entire selected period**; `OmittedGroups` reports groups left out of the view. HTML is generated locally, requires `-OutputPath`, and uses no external assets or services. `-DatabasePath` can read a different history file without changing the environment variable. Reading missing history returns an empty report without creating a database.
+
+Add `-Browse` with `-View Html` to open the saved report in your default browser. The command still returns the report's absolute path. If browser launch fails, the HTML file remains available and the error includes its path. Other views reject `-Browse`.
+
+Open the [example HTML dashboard](verification/gain-example.html) for a preview generated from two synthetic CLI fixtures. It demonstrates both reduction and expansion; it is not an application benchmark.
+
+### How the counter works
+
+QuietCli uses [RTK's estimator](https://github.com/rtk-ai/rtk/blob/develop/docs/guide/resources/savings-explained.md):
+
+```text
+estimated input tokens  = ceil(native stdout + stderr UTF-8 bytes / 4)
+estimated output tokens = ceil(final JSON UTF-8 bytes / 4)
+saved tokens            = estimated input tokens - estimated output tokens
+```
+
+The output count includes the **entire final, masked, bounded JSON envelope**, excluding the terminal newline. Input counts cover the decoded output of both streams, including delimiters, even in streaming mode. A composed task sums the bytes of its unique native calls, rounds once, and records its final delivery once. Nested tasks are not separate deliveries. Re-serializing the same result to the same database does not create another record; the first delivery is retained.
+
+**Negative savings are preserved** when the envelope is larger than the native output. `SavingsPercent` is computed from total estimated tokens, rather than averaging per-delivery percentages. `ByteReductionPercent` separately reports the byte ratio; the two can differ slightly because of rounding. Percentages are `null` when the measured input is zero.
+
+`UnmeasuredDeliveries` counts deliveries whose full baseline is unavailable, including startup failures, timeouts, or reuse of sources already credited to another delivery. Their token estimates are unknown and excluded from token totals. Complete sources with failed analysis or omitted fields remain observable through `FailedDeliveries`, `AnalysisIncompleteDeliveries`, and `TruncatedDeliveries`; reduced output volume does not establish a correct answer.
+
+Native child processes inherit `QUIETCLI_TRACKING=0` to avoid independently recording a companion that its parent is already measuring. In that case, the parent's baseline is the direct child's output, not hidden work inside that child. Independent PowerShell sessions share the database normally. Standalone Bash companions are not instrumented by this PowerShell runtime.
+
+Set `$env:QUIETCLI_TRACKING = '0'` to stop recording while keeping existing history readable. A tracking write failure does not change the business result or corrupt its JSON; `QuietCliGain` exposes `LastTrackingError` for the current process, and an unreadable history file raises an explicit error.
+
+These are **estimated command-output savings**, not tokenizer counts, provider billing figures, or total agent savings. Script generation, prompts, conversation history, and model responses are outside this measurement.
+
+## The six public functions
 
 | Function | Purpose | Useful parameters |
 | --- | --- | --- |
@@ -284,6 +351,7 @@ The [supplied measurement](verification/demo-measurements.json) reports **4,000 
 | `Invoke-QuietTask` | Compose steps and emit a final projection. | `-ScriptBlock`, `-ArgumentList`, `-MaxItems`, `-MaxOutputBytes`, `-AsJson`. |
 | `New-QuietResult` | Build a bounded envelope with your own data. | `-Summary`, `-Outcome`, `-Data`, `-Execution`, `-ErrorInfo`. |
 | `ConvertTo-QuietJson` | Serialize an envelope as compact JSON within the budget. | `-InputObject`, `-MaxOutputBytes`. |
+| `QuietCliGain` | Query SQLite gain history and display a report. | `-Days` or `-From` / `-To`, `-GroupBy`, `-View`, `-MaxItems`, `-OutputPath`, `-Browse`, `-DatabasePath`. |
 
 The [runtime](src/QuietCli.psm1) defines the exact signatures. Pass native arguments as an array; the runtime forwards them without an implicit shell. For a script or shell syntax, choose the interpreter explicitly.
 
@@ -373,6 +441,8 @@ The retained reports, **dated October 14, 2026**, describe sources identified by
 
 These reports are snapshots. They do not replace running the suite against your installed version. Checks cover native failures, timeouts, malformed output, limits, empty and singleton arrays, failure aggregation, and Git edge cases.
 
+The [0.2.0 validation report](verification/gain-release-tests.json), recorded on October 27, 2026 with Windows, PowerShell 7.6.9, and Python 3.9.13, adds **19 gain checks** to the **24 smoke checks** and **5 integration checks**: **48 passed**, with 2 POSIX Bash cases skipped. The gain suite is included in `-RuntimeOnly` and requires the system SQLite library but no Python or Git. This report does not claim a new Linux validation run.
+
 ## Troubleshooting
 
 | Symptom | Check or fix |
@@ -385,6 +455,8 @@ These reports are snapshots. They do not replace running the suite against your 
 | `.Data` is `null` | Read `Outcome`, `Error`, and `Truncation.Reasons`; look for `OutputBudget` in particular. |
 | A failed step disappears from the summary | Wrap its call in `Invoke-QuietStep` inside `Invoke-QuietTask`. |
 | A runtime change appears to be ignored | Start a fresh `pwsh -NoProfile` process: C# types already loaded remain in the session. |
+| Gain history is empty | Check `QUIETCLI_DB_PATH` and `QUIETCLI_TRACKING`. Deliver a native result through `ConvertTo-QuietJson` or use `Invoke-QuietTask -AsJson`; object-only work is not recorded. |
+| Gain recording failed | Inspect `LastTrackingError` in `QuietCliGain -View Object`, directory permissions, and the system SQLite library. An unreadable database raises an error rather than returning zero savings. |
 
 ## Sources and examples
 
@@ -396,6 +468,8 @@ These reports are snapshots. They do not replace running the suite against your 
 | [PowerShell Git](examples/Generated-GitOverview.ps1) and [Bash Git](examples/generated-git-status.sh) | Repository inspection companions. |
 | [Noisy task](examples/Generated-NoisyJob.ps1) | Streaming reduction and validation across two steps. |
 | [Test launcher](test/Invoke-Tests.ps1) | Runtime and integration verification. |
+| [Gain implementation](src/Gain.ps1) and [SQLite adapter](src/GainStore.cs) | Measurement accounting, reports, and prepared database statements. |
+| [Gain tests](test/Gain.Tests.ps1) | Real SQLite, Unicode counting, periods, nested tasks, failures, and views; no Python dependency. |
 
 When contributing parser changes, include cases for success, failure, invalid formats, and limits. Preserve the meaning of units, the scope analyzed, and the information needed for decisions in the companion contract.
 

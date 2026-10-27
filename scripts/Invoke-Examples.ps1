@@ -5,7 +5,7 @@ param([string]$QuietCliRoot=(Join-Path $PSScriptRoot '..'),[string]$Python='pyth
       [string]$ReportPath=(Join-Path $PSScriptRoot '../verification/series-examples.json'))
 $ErrorActionPreference='Stop'
 $root=[IO.Path]::GetFullPath($QuietCliRoot)
-Import-Module (Join-Path $root 'QuietCli.PoSh.psd1') -ErrorAction Stop
+Import-Module (Join-Path $root 'FrenchExDev.QuietCli.PoSh.psd1') -ErrorAction Stop
 $checks=[Collections.Generic.List[object]]::new()
 $engine=(Get-Process -Id $PID).Path
 $fixture=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../examples/Native-Fixture.ps1'))
@@ -82,7 +82,7 @@ $failed=@($checks|Where-Object {!$_.Passed}).Count
 $gitVersion=Invoke-QuietCli -FilePath git -ArgumentList @('--version') -Parse {param($capture) [pscustomobject]@{Version=([regex]::Match($capture.Stdout,'git version [\w.]+')).Value}}
 $pythonVersion=if($PythonImage){Invoke-QuietCli -FilePath podman -ArgumentList @('run','--rm','--pull=never','--network=none','--entrypoint','python3',$PythonImage,'--version') -Parse {param($capture) [pscustomobject]@{Version=([regex]::Match($capture.Stdout,'Python [\d.]+')).Value}}}
                else{Invoke-QuietCli -FilePath $Python -ArgumentList @('--version') -Parse {param($capture) [pscustomobject]@{Version=([regex]::Match($capture.Stdout,'Python [\d.]+')).Value}}}
-$report=[ordered]@{CheckedDate='2026-10-12';ExecutedAtUtc=[DateTime]::UtcNow.ToString('o');Outcome=$(if($failed){'Failed'}else{'Success'});PowerShell=$PSVersionTable.PSVersion.ToString();Git=$gitVersion.Data.Version;PythonVersion=$pythonVersion.Data.Version;ModuleVersion=(Import-PowerShellDataFile (Join-Path $root 'QuietCli.PoSh.psd1')).ModuleVersion;Python=$Python;PythonImage=$PythonImage;StreamingMode=$(if($PythonImage){'Podman adapter; original Python fixture; native Python companion not executed'}else{'Supplied native Python companion'});RtkExecuted=$false;Benchmark=$false;Passed=$checks.Count-$failed;Failed=$failed;Checks=$checks.ToArray()}
+$report=[ordered]@{CheckedDate='2026-10-12';ExecutedAtUtc=[DateTime]::UtcNow.ToString('o');Outcome=$(if($failed){'Failed'}else{'Success'});PowerShell=$PSVersionTable.PSVersion.ToString();Git=$gitVersion.Data.Version;PythonVersion=$pythonVersion.Data.Version;ModuleVersion=(Import-PowerShellDataFile (Join-Path $root 'FrenchExDev.QuietCli.PoSh.psd1')).ModuleVersion;Python=$Python;PythonImage=$PythonImage;StreamingMode=$(if($PythonImage){'Podman adapter; original Python fixture; native Python companion not executed'}else{'Supplied native Python companion'});RtkExecuted=$false;Benchmark=$false;Passed=$checks.Count-$failed;Failed=$failed;Checks=$checks.ToArray()}
 [void](New-Item -ItemType Directory -Path (Split-Path -Parent ([IO.Path]::GetFullPath($ReportPath))) -Force)
 $report|ConvertTo-Json -Depth 10|Set-Content -LiteralPath $ReportPath -Encoding utf8
 [pscustomobject]@{Outcome=$report.Outcome;Data=@{Passed=$report.Passed;Failed=$failed;Report=$ReportPath;Failures=@($checks|Where-Object {!$_.Passed}|Select-Object Name,Error)}}|ConvertTo-Json -Depth 5 -Compress

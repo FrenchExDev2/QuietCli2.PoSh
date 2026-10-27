@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuietCli gain</title>
+<style>body{background:#0f172a;color:#e2e8f0;font:16px system-ui;margin:3rem auto;padding:0 1.5rem;max-width:1100px}h1{color:#34d399}pre{white-space:pre-wrap;line-height:1.6}svg{width:100%;font:14px monospace}section{background:#1e293b;padding:1.5rem;border-radius:12px;margin:1.5rem 0}p{line-height:1.6}</style>
+<h1>QuietCli gain</h1><p>Example generated from two synthetic CLI fixtures: one verbose output and one small output. This is a functional preview, not an application benchmark.</p><p>Estimated command-output savings · UTC period · ceil(UTF-8 bytes / 4)</p>
+<section><pre>QuietCli gain — estimated tokens (ceil(UTF-8 bytes / 4))
+UTC period: 2026-10-26T21:53:32.5489006Z &lt;= timestamp &lt; 2026-10-27T21:53:32.5489006Z
+Deliveries: 2; native calls: 2; measured: 2; unmeasured: 0
+Input: 10001; output: 195; saved: 9806; reduction: 98.05%
+Failed deliveries: 0; incomplete analyses: 0; truncated/redacted: 0
+task                             9901 saved  (1 deliveries)
+pwsh.exe                          -95 saved  (1 deliveries)
+Negative savings mean expansion. Estimates cover command output, not total agent cost.</pre></section><section><h2>Saved tokens by command</h2><svg viewBox="0 0 920 136" role="img" aria-label="Estimated tokens saved by group"><line x1="470" y1="20" x2="470" y2="136" stroke="#94a3b8"/>
+<text x="12" y="45" fill="#e2e8f0">task</text><rect x="470" y="30" width="260" height="20" fill="#34d399"/><text x="760" y="45" fill="#e2e8f0">9901</text>
+<text x="12" y="83" fill="#e2e8f0">pwsh.exe</text><rect x="468" y="68" width="2" height="20" fill="#fb923c"/><text x="760" y="83" fill="#e2e8f0">-95</text>
+</svg>
+</section>
+<p>Green bars show savings; orange bars show expansion. Groups share one scale around zero. Incomplete sources are excluded from token totals. This standalone report uses no external scripts or services.</p>
+</html>
