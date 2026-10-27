@@ -1,5 +1,5 @@
 ﻿@{
-    RootModule = 'QuietCli.PoSh.psm1'
+    RootModule = 'FrenchExDev.QuietCli.PoSh.psm1'
     ModuleVersion = '0.1.0'
     GUID = 'c6792b32-6a6c-4f4e-a311-17bf9c5b33ed'
     Author = 'Stéphane Erard'
