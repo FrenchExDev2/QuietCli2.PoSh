@@ -1,0 +1,95 @@
+name: QuietCli
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+env:
+  MODULE_DIR: .
+
+jobs:
+  # Full suite (smoke + Python integration) directly on the hosted runners.
+  hosted:
+    name: hosted (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Run smoke and integration tests
+        run: |
+          ./${{ env.MODULE_DIR }}/test/Invoke-Tests.ps1 `
+            -Python (Get-Command python -ErrorAction Stop).Source `
+            -OutputPath '${{ runner.temp }}/quietcli-tests.json'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quietcli-${{ matrix.os }}
+          path: ${{ runner.temp }}/quietcli-tests.json
+          if-no-files-found: error
+
+  # Full suite inside an Alpine (musl) container with PowerShell 7.
+  alpine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests in Alpine container
+        run: |
+          mkdir -p "$RUNNER_TEMP/out"
+          docker run --rm \
+            -e MODULE_DIR -v "$GITHUB_WORKSPACE:/src" -v "$RUNNER_TEMP/out:/out" -w /src \
+            mcr.microsoft.com/dotnet/sdk:8.0-alpine \
+            sh -c 'apk add --no-cache git python3 bash jq gawk coreutils >/dev/null &&
+                   git config --global --add safe.directory "*" &&
+                   pwsh -NoLogo -NoProfile -File ./$MODULE_DIR/test/Invoke-Tests.ps1 -Python python3 -OutputPath /out/quietcli-tests.json'
+        env:
+          MODULE_DIR: ${{ env.MODULE_DIR }}
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quietcli-alpine
+          path: ${{ runner.temp }}/out/quietcli-tests.json
+          if-no-files-found: error
+
+  # Runtime smoke tests inside a Windows Server Core container.
+  windows-servercore:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests in Server Core container
+        run: |
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\out" | Out-Null
+          docker run --rm `
+            -v "${env:GITHUB_WORKSPACE}:C:\src" -v "${env:RUNNER_TEMP}\out:C:\out" -w C:\src `
+            mcr.microsoft.com/dotnet/sdk:8.0-windowsservercore-ltsc2022 `
+            pwsh -NoLogo -NoProfile -File "C:\src\${{ env.MODULE_DIR }}\test\Invoke-Tests.ps1" `
+              -RuntimeOnly -OutputPath C:\out\quietcli-tests.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quietcli-windows-servercore
+          path: ${{ runner.temp }}/out/quietcli-tests.json
+          if-no-files-found: error
