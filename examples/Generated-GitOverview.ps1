@@ -3,7 +3,7 @@
 [CmdletBinding()]
 param([Parameter(Mandatory)][string]$Repository,
       [ValidateRange(1024,65536)][int]$MaxOutputBytes=2048)
-Import-Module (Join-Path $PSScriptRoot '../QuietCli.PoSh.psd1') -ErrorAction Stop
+Import-Module (Join-Path $PSScriptRoot '../FrenchExDev.QuietCli.PoSh.psd1') -ErrorAction Stop
 $repositoryPath=[IO.Path]::GetFullPath($Repository)
 
 Invoke-QuietTask -MaxOutputBytes $MaxOutputBytes -AsJson -ArgumentList @($repositoryPath) -ScriptBlock {

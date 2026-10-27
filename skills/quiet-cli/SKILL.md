@@ -48,7 +48,7 @@ The default final limit is **4096 UTF-8 bytes**, not tokens. Use **2048 bytes** 
 
 ## Write a task
 
-Use the five public functions defined by the [root manifest](../../QuietCli.PoSh.psd1): `Invoke-QuietCli`, `New-QuietResult`, `Invoke-QuietStep`, `Invoke-QuietTask` and `ConvertTo-QuietJson`. The [implementation](../../src/QuietCli.psm1) defines the exact parameters and limit behavior.
+Use the five public functions defined by the [root manifest](../../FrenchExDev.QuietCli.PoSh.psd1): `Invoke-QuietCli`, `New-QuietResult`, `Invoke-QuietStep`, `Invoke-QuietTask` and `ConvertTo-QuietJson`. The [implementation](../../src/QuietCli.psm1) defines the exact parameters and limit behavior.
 
 This small example obtains the current branch. Empty successful output denotes detached HEAD; the official [Git branch documentation](https://git-scm.com/docs/git-branch) defines `--show-current`.
 

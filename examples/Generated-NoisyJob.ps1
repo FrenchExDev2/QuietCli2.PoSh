@@ -4,7 +4,7 @@
 param([string]$Python='python3', [ValidateRange(1,100000)][int]$Records=2000,
       [ValidateRange(1024,65536)][int]$MaxOutputBytes=2048)
 
-Import-Module (Join-Path $PSScriptRoot '../QuietCli.PoSh.psd1') -ErrorAction Stop
+Import-Module (Join-Path $PSScriptRoot '../FrenchExDev.QuietCli.PoSh.psd1') -ErrorAction Stop
 $fixture=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../fixtures/noisy-job.py'))
 
 # This companion executes the intended native command in each stage, consumes its

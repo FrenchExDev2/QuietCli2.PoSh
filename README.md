@@ -1,372 +1,398 @@
-# CLI Companion Prompt — reduce the tokens read by AI
+# QuietCli
 
-**Ask your AI agent to turn command output into useful answers using scripts it builds and runs locally.**
+**Faites lire à votre agent IA le résultat utile d’une commande. Calculez ce résultat localement.**
 
-[SKILL](skills/quiet-cli/SKILL.md) contains the instructions to give the agent. For each CLI invocation, it asks the agent to prepare or reuse a **companion script** in **PowerShell Core 7.4+** or **Bash**. This script runs the intended command, consumes its output, and returns a common result object with a **freely defined `.Data` property**.
-
-The AI reads the compact execution result. Local code handles logs, progress, and intermediate data.
-
-## What is this prompt for?
-
-Terminal output often mixes progress messages, repetition, diagnostics, and useful facts. When the agent reads all of this text, that volume enters its context.
-
-The companion script turns repetitive interpretation into code: parsing a machine-readable format, counting events, selecting errors, normalizing fields, and computing the required answer.
-
-This approach suits agents that inspect repositories, run builds or tests, process files, or chain several tools together. It is especially useful when output is verbose or data from several commands can be combined locally.
-
-## Download a complete bundle
-
-The [QuietCli ZIP](https://github.com/FrenchExDev/FrenchExDev/raw/refs/heads/develop/PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh/downloads/QuietCli.zip) contains the runtime, skill, examples, fixtures and verification launcher. It extracts into one `QuietCli/` directory. Use PowerShell **7.4+ Core** and Git for this first example; Python is needed only for the noisy-job example.
-
-```powershell
-$archive = Join-Path (Get-Location).Path 'QuietCli.zip'
-Invoke-WebRequest -Uri 'https://github.com/FrenchExDev/FrenchExDev/raw/refs/heads/develop/PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh/downloads/QuietCli.zip' -OutFile $archive
-Expand-Archive -LiteralPath $archive -DestinationPath (Get-Location).Path
-$moduleRoot = Join-Path (Get-Location).Path 'QuietCli'
-Import-Module (Join-Path $moduleRoot 'QuietCli.PoSh.psd1') -ErrorAction Stop
-& (Join-Path $moduleRoot 'examples/Generated-GitOverview.ps1') `
-    -Repository 'C:/code/my-project' -MaxOutputBytes 2048
-```
-
-Replace the repository path with yours. No PowerShell profile edit or editor installation is needed for this route. Give [SKILL.md](skills/quiet-cli/SKILL.md) and the extracted module path to your agent. Downloading that instruction file alone does not install the runtime.
-
-The [archive manifest](https://github.com/FrenchExDev/FrenchExDev/blob/develop/PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh/downloads/QuietCli.manifest.json) records SHA-256 hashes and the source branch. GitHub links target the moving `develop` branch; keep the manifest with a downloaded archive to identify its contents. To reproduce the executable checks with an installed Python interpreter, run:
-
-```powershell
-& (Join-Path $moduleRoot 'scripts/Invoke-Examples.ps1') `
-    -QuietCliRoot $moduleRoot -Python python3
-```
-
-Maintainers can rebuild the archive with `./scripts/New-QuietCliArchive.ps1` from this module directory. The sparse-clone route below remains available when you want a Git checkout.
-
-## Get started in one minute
-
-Use **PowerShell Core 7.4+**, Git, and Visual Studio Code with the `code` command available.
-
-**1. Clone only the QuietCli directory from `develop`.** Choose a new local directory; this example uses `$HOME/FrenchExDev-QuietCli`:
-
-```powershell
-$cloneRoot = Join-Path $HOME 'FrenchExDev-QuietCli'
-git clone --depth 1 --filter=blob:none --no-checkout --single-branch --branch develop `
-    https://github.com/FrenchExDev/FrenchExDev.git $cloneRoot
-if ($LASTEXITCODE -ne 0) { throw 'QuietCli clone failed.' }
-git -C $cloneRoot sparse-checkout set --no-cone '/PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh/'
-if ($LASTEXITCODE -ne 0) { throw 'QuietCli sparse checkout failed.' }
-git -C $cloneRoot checkout develop
-if ($LASTEXITCODE -ne 0) { throw 'QuietCli checkout failed.' }
-```
-
-The [partial clone](https://git-scm.com/docs/git-clone) defers downloading file contents until needed. The [sparse checkout](https://git-scm.com/docs/git-sparse-checkout) selects the [QuietCli module directory](https://github.com/FrenchExDev/FrenchExDev/tree/develop/PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh); repository metadata remains in `$cloneRoot/.git`.
-
-**2. Open your PowerShell profile.** Create the profile file if necessary, preserving any existing contents:
-
-```powershell
-New-Item -ItemType Directory -Path (Split-Path -Parent $PROFILE) -Force | Out-Null
-if (!(Test-Path -LiteralPath $PROFILE)) {
-    New-Item -ItemType File -Path $PROFILE | Out-Null
-}
-code $PROFILE
-```
-
-**3. Paste this line into the profile and save it:**
-
-```powershell
-Import-Module (Join-Path $HOME 'FrenchExDev-QuietCli/PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh/QuietCli.PoSh.psd1') -ErrorAction Stop
-```
-
-If you chose a different `$cloneRoot`, replace the path with the full path to `QuietCli.PoSh.psd1` in that clone. The profile line loads the module at each PowerShell startup without relying on variables from the cloning session.
-
-**4. Load it now and open the module directory:**
-
-```powershell
-. $PROFILE
-Set-Location (Join-Path $cloneRoot 'PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh')
-```
-
-Open [SKILL](skills/quiet-cli/SKILL.md) and provide its contents to your agent, either in its working instructions or alongside your request. Describe the question, ask the agent to create or reuse a companion script, then review the result's status, useful data, completeness, and omissions.
-
-Example request:
+QuietCli est un module **PowerShell 7.4+ Core** pour écrire des **scripts compagnons** : ils exécutent vos outils, analysent leurs sorties et renvoient un seul résultat JSON avec un budget explicite. L’agent définit la question ; le script calcule la réponse ; QuietCli gère les processus, les deux flux et l’enveloppe du résultat.
 
 ```text
-Read skills/quiet-cli/SKILL.md and follow its instructions.
+Question : « Ce dépôt nécessite-t-il une revue ? »
 
-Inspect this Git repository. I want to know the current branch,
-the number of changed entries, the number of untracked entries,
-and whether the repository is clean.
-
-Create or reuse a PowerShell 7.4+ companion script.
-Return a single JSON result with a final budget of 2048 bytes.
+git branch + git status
+        ↓ analyse locale dans un script compagnon
+{ Branch: "main", Changed: 1, Untracked: 1, Clean: false }
+        ↓ une enveloppe JSON bornée
+L’agent dispose des faits nécessaires pour décider.
 ```
 
-The prompt defines an execution discipline. Its application depends on the agent and the available tools; it does not automatically install a command interceptor.
+**5 fonctions publiques · JSON borné en UTF-8 · tâches composables · licence MIT**
 
-The included [QuietCli module](QuietCli.PoSh.psm1) implements this contract in PowerShell. The remaining commands in this README run from the root of the `FrenchExDev.QuietCli.PoSh` directory selected above.
+[Démarrer](#démarrer) · [Charger au démarrage](#charger-quietcli-au-démarrage-de-pwsh) · [Exemple Git](#exemple-concret--contrôler-un-dépôt-git) · [Créer un compagnon](#écrire-votre-premier-compagnon) · [API](#les-cinq-fonctions-publiques) · [Dépannage](#dépannage)
 
-## How the data flows
+## Pourquoi QuietCli ?
 
-```mermaid
-flowchart TD
-    A["AI: defines the required information"] --> S
-    subgraph Local["Local execution"]
-        S["Companion script"] --> C["Original CLI or script"]
-        C --> O["stdout"]
-        C --> E["stderr"]
-        O --> R["Parser and domain calculations"]
-        E --> R
-        R --> D["Domain object in .Data"]
-        D --> J["Bounded final JSON"]
-    end
-    J --> I["AI: reads the result and decides"]
-```
+Une sortie de terminal mélange souvent progression, diagnostics et données. QuietCli permet de traiter ce texte dans un programme local et d’envoyer à l’IA une réponse adaptée à la demande.
 
-The command continues to produce output. What is controlled is the volume of text passed to the AI. The agent defines what it needs to know, then builds the program that extracts that information.
+| Votre question | Le script calcule et retourne |
+| --- | --- |
+| Le dépôt est-il propre ? | Branche, entrées modifiées, entrées non suivies, indicateur `Clean`. |
+| Les validations ont-elles réussi ? | Totaux, échecs et diagnostics sélectionnés. |
+| Combien d’éléments correspondent ? | Nombre, périmètre, unité et état de complétude. |
+| La préparation autorise-t-elle l’étape suivante ? | Résultat de préparation, décision locale, résultat de validation. |
 
-Scripts and calculations use local resources. Creating them also has a cost; reusable components can be kept for later requests.
+La propriété `.Data` est libre : un objet métier, un tableau, un scalaire ou `null`. Vous décidez des informations nécessaires et conservez les calculs intermédiaires dans le script.
 
-## A `.Data` property tailored to the question
+## Démarrer
 
-The common contract does not prescribe the domain properties of `.Data`. Their shape depends on the task's intent.
+### Prérequis
 
-| Question | Useful `.Data` content |
-|---|---|
-| Is the repository clean? | Branch, entry counts, and a `Clean` Boolean. |
-| Did the tests pass? | Total, passes, failures, and selected diagnostics. |
-| How many lines match this search? | Count, unit, scope, and completeness status. |
-| Which output file was produced? | Path, format, and generation status. |
-| Which anomalies need review? | A small array of anomalies and an established total count. |
+| Composant | Quand est-il nécessaire ? |
+| --- | --- |
+| **PowerShell 7.4+ Core**, exécutable `pwsh` | Pour le module et les compagnons PowerShell. Windows PowerShell 5.1 ne convient pas. |
+| **Git** dans le `PATH` | Pour les exemples Git. |
+| **Python 3** | Pour la démonstration bruyante et la suite d’intégration complète. |
+| Bash, awk, jq et GNU `timeout` | Pour le compagnon Bash et ses vérifications sous Linux. |
 
-In PowerShell, the agent can build a suitable object:
+Le module PowerShell n’a aucune dépendance à un module tiers. Son code C# est chargé à l’import ; aucun SDK .NET à installer séparément. Un éditeur particulier n’est pas requis.
+
+### 1. Obtenir le module
+
+**Depuis ce workspace**, copiez ce bloc dans `pwsh` :
 
 ```powershell
-[pscustomobject]@{
-    Branch = 'main'
-    Changed = 2
-    Untracked = 1
-    Clean = $false
-    AnswerComplete = $true
-}
+$moduleRoot = 'C:/code/FrenchExDev/FrenchExDev_i2/PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh'
+$moduleRoot = (Resolve-Path -LiteralPath $moduleRoot -ErrorAction Stop).Path
+Import-Module (Join-Path $moduleRoot 'QuietCli.PoSh.psd1') -ErrorAction Stop
+Get-Command -Module QuietCli.PoSh
 ```
 
-`.Data` can also be an array, a dictionary, a scalar, or `null`. In Bash, it is represented by a JSON value. Named properties let the script continue its calculations locally.
+Adaptez la première ligne à l’emplacement de votre checkout. Le fichier à importer s’appelle bien **`QuietCli.PoSh.psd1`**.
 
-To determine whether a repository is clean, the list of file names is unnecessary. If the question asks which files changed, the script must retain those names. Information selection must follow the actual need.
+**Sans checkout**, téléchargez le [bundle QuietCli.zip](downloads/QuietCli.zip), enregistrez-le dans votre dossier de téléchargements, puis extrayez-le vers un emplacement durable :
 
-## The common object describes the result
+```powershell
+# Adaptez ce chemin à l’emplacement réel du téléchargement.
+$archive = Join-Path $HOME 'Downloads/QuietCli.zip'
+$installRoot = Join-Path $HOME '.local/share/quietcli'
+if (Test-Path -LiteralPath (Join-Path $installRoot 'QuietCli')) {
+    throw 'QuietCli existe déjà ici. Choisissez un autre dossier pour cette extraction.'
+}
+Expand-Archive -LiteralPath $archive -DestinationPath $installRoot -ErrorAction Stop
+$moduleRoot = (Resolve-Path -LiteralPath (Join-Path $installRoot 'QuietCli')).Path
+Import-Module (Join-Path $moduleRoot 'QuietCli.PoSh.psd1') -ErrorAction Stop
+Get-Command -Module QuietCli.PoSh
+```
 
-| Property | Role |
-|---|---|
-| `SchemaVersion` | Version of the common envelope, here `1`. |
-| `Summary` | A brief explanation of the result. |
-| `Outcome` | `Success`, `Failed`, `Timeout` ou `Unsupported`. |
-| `Data` | Companion object chosen for the task. |
-| `Execution` | Exit code, analysis status, and optional step counters. |
-| `Error` | Relevant structured diagnostic, or `null`. |
-| `Truncation` | Omitted information and reasons. |
+Le ZIP contient le runtime, le skill, les exemples, les fixtures et le lanceur de vérification. Conservez son `package-manifest.json` et le [manifeste de distribution](downloads/QuietCli.manifest.json), qui identifient les contenus par SHA-256. Le README du checkout et celui d’une archive précédemment générée peuvent correspondre à des révisions différentes.
 
-Illustrative example of a task combining two commands:
+### 2. Obtenir un premier résultat
+
+Dans la même session, indiquez **un dépôt Git existant** :
+
+```powershell
+$repository = 'C:/code/my-project' # À remplacer.
+& (Join-Path $moduleRoot 'examples/Generated-GitOverview.ps1') `
+    -Repository $repository -MaxOutputBytes 2048
+```
+
+Vous obtenez un document JSON avec `Outcome`, `Data`, `Execution`, `Error` et `Truncation`. L’[exemple reproductible](#exemple-concret--contrôler-un-dépôt-git) ci-dessous crée son propre dépôt si vous préférez essayer sans toucher à votre projet.
+
+## Charger QuietCli au démarrage de pwsh
+
+PowerShell distingue le profil de l’hôte courant (`$PROFILE`) du profil commun aux hôtes de l’utilisateur (`$PROFILE.CurrentUserAllHosts`). Pour retrouver QuietCli dans la console et dans les autres hôtes PowerShell, utilisez le second. Les profils et leur ordre de chargement sont décrits dans la [documentation PowerShell](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_profiles).
+
+**Après l’une des installations précédentes**, exécutez ce bloc. Il utilise `$moduleRoot`, valide le manifeste, sauvegarde le profil existant et ajoute une section identifiée une seule fois :
+
+```powershell
+$quietCliManifest = (Resolve-Path -LiteralPath (
+    Join-Path $moduleRoot 'QuietCli.PoSh.psd1'
+) -ErrorAction Stop).Path
+$profilePath = $PROFILE.CurrentUserAllHosts
+$marker = '# >>> QuietCli >>>'
+$profileText = if (Test-Path -LiteralPath $profilePath) {
+    [string](Get-Content -LiteralPath $profilePath -Raw)
+} else { '' }
+
+if ($profileText.Contains($marker)) {
+    Write-Host "Une section QuietCli existe déjà dans $profilePath. Vérifiez son chemin si vous avez déplacé le module."
+} else {
+    New-Item -ItemType Directory -Path (Split-Path -Parent $profilePath) -Force | Out-Null
+    if (Test-Path -LiteralPath $profilePath) {
+        $backupPath = '{0}.{1}.bak' -f $profilePath, (Get-Date -Format 'yyyyMMdd-HHmmss-fffffff')
+        Copy-Item -LiteralPath $profilePath -Destination $backupPath -ErrorAction Stop
+    }
+    $profileBlock = @"
+# >>> QuietCli >>>
+Import-Module '__QUIETCLI_MANIFEST__' -ErrorAction Stop
+# <<< QuietCli <<<
+"@
+    $profileBlock = $profileBlock.Replace('__QUIETCLI_MANIFEST__', $quietCliManifest.Replace("'", "''"))
+    Add-Content -LiteralPath $profilePath -Value ("`n" + $profileBlock) -Encoding utf8
+}
+
+# Charger la configuration dans la session actuelle.
+. $profilePath
+Get-Command Invoke-QuietCli, Invoke-QuietTask, Invoke-QuietStep
+```
+
+Le profil contient un **chemin absolu**, correctement cité, et fonctionne sans les variables de la session d’installation. Ouvrez ensuite un nouveau terminal avec `pwsh` pour vérifier le chargement au démarrage.
+
+Un processus lancé avec `pwsh -NoProfile` ignore les profils ; ses scripts doivent importer le module eux-mêmes. Les compagnons fournis le font déjà. Les sessions distantes ne chargent pas non plus automatiquement votre profil local. Pour limiter le chargement à l’hôte courant, remplacez `$PROFILE.CurrentUserAllHosts` par `$PROFILE` dans le bloc d’installation.
+
+Pour déplacer ou désactiver l’installation, éditez la section comprise entre les deux marqueurs dans `$profilePath`. Les commandes restent chargées dans les sessions déjà ouvertes jusqu’à leur fermeture ou au déchargement du module.
+
+## Exemple concret : contrôler un dépôt Git
+
+**Objectif :** obtenir la branche, le nombre d’entrées modifiées et non suivies, puis savoir si le dépôt est propre. Le compagnon fourni combine deux observations Git et livre un seul JSON de **2 048 octets maximum**.
+
+### Créer un cas reproductible
+
+Ce bloc crée un nouveau dossier temporaire, un commit local, une modification et un dossier non suivi. Aucun dépôt existant n’est utilisé. Git doit être installé ; `$moduleRoot` provient du démarrage ci-dessus.
+
+```powershell
+$demoRepo = Join-Path ([IO.Path]::GetTempPath()) ('quietcli-demo-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $demoRepo | Out-Null
+git init --quiet --initial-branch=main $demoRepo
+if ($LASTEXITCODE -ne 0) { throw 'Échec de git init.' }
+
+Set-Content -LiteralPath (Join-Path $demoRepo 'app.txt') -Value 'version 1'
+git -C $demoRepo add app.txt
+if ($LASTEXITCODE -ne 0) { throw 'Échec de git add.' }
+git -C $demoRepo -c user.name=QuietCli -c user.email=demo@example.invalid `
+    -c commit.gpgsign=false -c core.hooksPath= `
+    commit --quiet -m 'Initial demo'
+if ($LASTEXITCODE -ne 0) { throw 'Échec du commit de démonstration.' }
+
+Set-Content -LiteralPath (Join-Path $demoRepo 'app.txt') -Value 'version 2'
+New-Item -ItemType Directory -Path (Join-Path $demoRepo 'notes') | Out-Null
+Set-Content -LiteralPath (Join-Path $demoRepo 'notes/a.txt') -Value 'première note'
+Set-Content -LiteralPath (Join-Path $demoRepo 'notes/b.txt') -Value 'seconde note'
+
+$json = & (Join-Path $moduleRoot 'examples/Generated-GitOverview.ps1') `
+    -Repository $demoRepo -MaxOutputBytes 2048
+$json
+```
+
+Dans l’enveloppe retournée, `.Data` vaut :
 
 ```json
 {
-  "SchemaVersion": 1,
-  "Summary": "Repository status computed.",
-  "Outcome": "Success",
-  "Data": {
-    "Branch": "main",
-    "Changed": 2,
-    "Untracked": 1,
-    "Clean": false,
-    "AnswerComplete": true
-  },
-  "Execution": {
-    "ExitCode": null,
-    "Steps": 2,
-    "AnalysisComplete": true
-  },
-  "Error": null,
-  "Truncation": { "Applied": false, "Reasons": [] }
+  "Branch": "main",
+  "Detached": false,
+  "Changed": 1,
+  "Untracked": 1,
+  "Clean": false,
+  "AnswerComplete": true
 }
 ```
 
-The overall exit code is `null` here because the task aggregates several commands. An individual command can expose its native exit code in `Execution.ExitCode`.
+`Changed` compte les **entrées de statut suivies**, pas les lignes modifiées. `Untracked` compte les entrées de `git status --untracked-files=normal` : le dossier `notes/` vaut **une entrée**, même s’il contient deux fichiers. Les fichiers ignorés ne sont pas comptés. Le compagnon gère les enregistrements terminés par NUL et les renommages, conformément au [format porcelain de Git](https://git-scm.com/docs/git-status).
 
-## Compose subtasks in a long-running process
-
-The AI can generate a script that chains commands, uses their objects, and applies conditions locally. For example, validation can depend on successful preparation.
-
-```mermaid
-flowchart TD
-    P["Prepare the data"] --> Q{"Preparation successful?"}
-    Q -->|Yes| V["Validate the data"]
-    Q -->|No| F["Preserve the failure status"]
-    V --> T{"Validation successful?"}
-    T -->|Yes| D["Build the domain answer"]
-    T -->|No| F
-    D --> J["One final JSON envelope"]
-    F --> J
-    J --> A["AI: uses the data and status"]
-```
-
-Intermediate results remain in the script's variables. The final envelope preserves failures: a useful projection must not hide a failed subtask.
-
-If another AI decision becomes necessary, the script can end a phase with a compact state. The agent reads that result and builds the next phase. Persistent checkpoints, resuming after interruption, and parallelism require additional implementation.
-
-## Try the complete example
-
-[Generated-NoisyJob.ps1](examples/Generated-NoisyJob.ps1) is an example companion script produced for this approach. It calls a local demonstration CLI to prepare items, then validate them.
+### Exploiter le résultat dans votre script
 
 ```powershell
-pwsh -NoLogo -NoProfile -File ./examples/Generated-NoisyJob.ps1 `
+$result = $json | ConvertFrom-Json -ErrorAction Stop
+if ($result.Outcome -ne 'Success' -or
+    !$result.Execution.AnalysisComplete -or
+    $result.Truncation.Applied -or
+    $null -eq $result.Data -or
+    !$result.Data.AnswerComplete) {
+    throw "Résultat insuffisant : $($result.Outcome). Inspectez Error et Truncation."
+}
+
+if ($result.Data.Clean) {
+    'Dépôt propre.'
+} else {
+    'Revue nécessaire : {0} entrée(s) modifiée(s), {1} non suivie(s).' -f `
+        $result.Data.Changed, $result.Data.Untracked
+}
+```
+
+Pour ce cas, la réponse est : `Revue nécessaire : 1 entrée(s) modifiée(s), 1 non suivie(s).`
+
+Les observations sont séquentielles et ne constituent pas un instantané atomique. Un dépôt peut évoluer entre deux commandes. En HEAD détachée, `Branch` vaut `null` et `Detached` vaut `true` ; cela n’est pas une erreur d’exécution.
+
+Pour une projection incluant aussi le commit et une décision `NeedsReview`, utilisez [Invoke-RepositoryDecision.ps1](examples/Invoke-RepositoryDecision.ps1). Ce compagnon réutilise le premier et vérifie son enveloppe avant de poursuivre ; il nécessite un dépôt ayant déjà un commit.
+
+## Utiliser QuietCli avec votre agent IA
+
+Le [skill quiet-cli](skills/quiet-cli/SKILL.md) décrit comment préparer ou réutiliser un compagnon. Donnez à l’agent **le fichier d’instructions et le chemin du runtime installé**. Télécharger le skill seul ne fournit pas le module.
+
+Exemple de demande prête à adapter :
+
+```text
+Lis le fichier <chemin-module>/skills/quiet-cli/SKILL.md.
+Le runtime est <chemin-module>/QuietCli.PoSh.psd1.
+
+Dans le dépôt <chemin-projet>, je veux la branche, les nombres d’entrées
+modifiées et non suivies, et un booléen indiquant si le dépôt est propre.
+Réutilise examples/Generated-GitOverview.ps1 si son périmètre convient.
+Exécute localement le compagnon et retourne un seul résultat JSON,
+avec un budget total de 2048 octets. Préserve les échecs, les limites
+et la signification des compteurs. Ne modifie pas le dépôt inspecté.
+```
+
+Charger le module dans `$PROFILE` rend ses fonctions disponibles dans les sessions concernées. L’agent doit encore choisir et appeler un compagnon : QuietCli ne configure aucun hook d’interception automatique des commandes.
+
+## Écrire votre premier compagnon
+
+Voici une version minimale qui répond à une seule question : **quelle est la branche courante ?** Elle utilise le [format documenté de `git branch --show-current`](https://git-scm.com/docs/git-branch). Exécutez-la après le démarrage, ou enregistrez-la dans un script qui importe explicitement le manifeste.
+
+```powershell
+$repository = $demoRepo # Ou le chemin absolu d’un autre dépôt Git.
+Invoke-QuietTask -MaxOutputBytes 2048 -AsJson -ArgumentList @($repository) -ScriptBlock {
+    param($repo)
+    $branch = Invoke-QuietStep -Name 'branch' -ScriptBlock {
+        Invoke-QuietCli -FilePath git -ArgumentList @('branch', '--show-current') `
+            -WorkingDirectory $repo -Summary 'Branche courante extraite.' -Parse {
+                param($capture)
+                $name = $capture.Stdout.TrimEnd("`r", "`n")
+                [pscustomobject]@{
+                    Branch = $(if ($name.Length) { $name } else { $null })
+                    Detached = ($name.Length -eq 0)
+                }
+            }
+    }
+    if ($branch.Outcome -ne 'Success') { return }
+    [pscustomobject]@{
+        Branch = $branch.Data.Branch
+        Detached = $branch.Data.Detached
+        AnswerComplete = $true
+    }
+}
+```
+
+`Invoke-QuietStep` inscrit le résultat dans la tâche, même si vous l’affectez à une variable. Après un échec, le script s’arrête avant de fabriquer une réponse métier. La tâche conserve cet échec dans son enveloppe finale. L’affectation seule d’un appel à `Invoke-QuietCli` ne l’enregistre pas comme étape : utilisez `Invoke-QuietStep`.
+
+Le parseur reçoit la capture locale et retourne **un seul objet** ; pour retourner un tableau comme valeur unique, utilisez la virgule unaire (`return ,$items`). Ne retournez jamais la capture brute. Dans un réducteur streaming, `-OnRecord` met uniquement à jour l’état ; `-Complete` produit l’objet final.
+
+## Traiter une commande très bavarde
+
+Le compagnon [Generated-NoisyJob.ps1](examples/Generated-NoisyJob.ps1) exécute une préparation, puis une validation. Une fixture Python produit des événements sur stdout et des diagnostics sur stderr. Le script les consomme localement, vérifie les événements de fin et agrège les deux étapes.
+
+```powershell
+$companion = Join-Path $moduleRoot 'examples/Generated-NoisyJob.ps1'
+pwsh -NoLogo -NoProfile -File $companion `
     -Python python3 -Records 2000 -MaxOutputBytes 2048
 ```
 
-Use `-Python python` if that is the name of the Python 3 executable installed on your machine.
+Utilisez `-Python python` ou le chemin absolu de Python 3 si nécessaire. Pour 2 000 éléments par étape, la projection contient `Prepared: 2000`, `Validated: 2000` et les compteurs de chaque étape.
 
-In the supplied run, the two steps produced **4000 progress events and 4000 diagnostics**, plus their completion events. The script consumed them locally and returned a **533-byte** JSON envelope, within the 2048-byte budget.
+La [mesure fournie](verification/demo-measurements.json) rapporte **4 000 événements de progression et 4 000 diagnostics consommés**, puis un JSON final de **533 octets** hors saut de ligne. C’est une observation enregistrée avec PowerShell 7.4.20 ; la taille peut varier, notamment avec la durée d’exécution. Elle ne mesure pas les économies totales de tokens ou d’argent.
 
-Its `.Data` includes:
+## Les cinq fonctions publiques
 
-```json
-{
-  "Operation": "prepare-and-validate",
-  "AnswerComplete": true,
-  "Prepared": 2000,
-  "Validated": 2000,
-  "Stages": [
-    { "Stage": "prepare", "Processed": 2000, "DiagnosticRecords": 2000 },
-    { "Stage": "validate", "Processed": 2000, "DiagnosticRecords": 2000 }
-  ]
-}
-```
+| Fonction | Rôle | Paramètres utiles |
+| --- | --- | --- |
+| `Invoke-QuietCli` | Exécuter un programme natif et analyser ses deux flux. | `-FilePath`, `-ArgumentList`, `-WorkingDirectory`, `-Parse` ou `-OnRecord` / `-State` / `-Complete`, `-TimeoutSeconds`. |
+| `Invoke-QuietStep` | Enregistrer un résultat dans la tâche courante. | `-Name`, `-ScriptBlock`. Nécessite une tâche active. |
+| `Invoke-QuietTask` | Composer les étapes et émettre une projection finale. | `-ScriptBlock`, `-ArgumentList`, `-MaxItems`, `-MaxOutputBytes`, `-AsJson`. |
+| `New-QuietResult` | Construire une enveloppe bornée avec vos propres données. | `-Summary`, `-Outcome`, `-Data`, `-Execution`, `-ErrorInfo`. |
+| `ConvertTo-QuietJson` | Sérialiser une enveloppe en JSON compact avec contrôle du budget. | `-InputObject`, `-MaxOutputBytes`. |
 
-The [measurements](verification/demo-measurements.json) and [complete result](verification/demo-result.json) accompany the example. This byte count measures the transported data in the supplied run; it is not a percentage of token savings.
+Les signatures exactes sont dans le [runtime](src/QuietCli.psm1). Passez les arguments natifs dans un tableau ; le runtime les transmet sans shell implicite. Pour un script ou une syntaxe de shell, choisissez explicitement l’interpréteur.
 
-Two additional examples are included:
+### Deux modes de lecture
 
-```powershell
-pwsh -NoLogo -NoProfile -File ./examples/Generated-GitOverview.ps1 `
-    -Repository 'C:/code/mon-projet' -MaxOutputBytes 2048
-```
+| Mode | Usage | Contrat |
+| --- | --- | --- |
+| **Document** : `-Parse` | Un document JSON ou une petite sortie complète. | Le parseur reçoit la capture après exécution. Une capture dépassant la limite est un échec `CaptureLimit`. |
+| **Streaming** : `-OnRecord`, `-State`, `-Complete` | Des événements, lignes ou enregistrements nombreux. | Le réducteur tient des compteurs et un échantillon borné. Une perte d’enregistrements invalide l’analyse (`RecordLimit`). |
 
-```bash
-bash ./examples/generated-git-status.sh /chemin/du/depot
-```
+### Limites par défaut
 
-The Bash example uses Bash 4+, Git, awk, jq, and GNU `timeout`. The Git examples count entries within the selected scope: with `--untracked-files=normal`, an untracked directory can represent a single entry.
+| Paramètre | Défaut | Unité et portée |
+| --- | --- | --- |
+| `MaxOutputBytes` | `4096` | Octets UTF-8 pour l’enveloppe JSON ; plage `1024` à `65536`. |
+| `MaxItems` | `20` | Valeurs de projection émises par le corps d’une tâche. Ne limite pas chaque tableau imbriqué dans `.Data`. |
+| `TimeoutSeconds` | `600` | Secondes par appel natif. |
+| `MaxCaptureCharacters` | `262144` | Caractères de capture en mode document. |
+| `MaxRecordCharacters` | `65536` | Caractères par enregistrement en mode streaming. |
 
-## Use the PowerShell stack
+Le budget final doit couvrir **toute la réponse**, pas vingt sorties affichées séparément. Les objets intermédiaires QuietCli passent eux aussi par leur propre budget : une donnée omise à cette étape ne réapparaît pas en augmentant seulement le budget final. Pour les grandes données, calculez une projection plus petite ou travaillez en streaming.
 
-| Function | Role |
-|---|---|
-| `Invoke-QuietCli` | Run a CLI and extract its useful data. |
-| `New-QuietResult` | Build the envelope with a freely defined `.Data`. |
-| `Invoke-QuietStep` | Record a step's result and failure. |
-| `Invoke-QuietTask` | Compose steps under a single final budget. |
-| `ConvertTo-QuietJson` | Produce the compact response the AI will read. |
+## Lire correctement un résultat
 
-Example for a CLI that provides an `inspect --json` command:
+| Champ | Ce qu’il indique |
+| --- | --- |
+| `SchemaVersion` | Version de l’enveloppe : `1`. |
+| `Summary` | Résumé court de l’exécution. |
+| `Outcome` | `Success`, `Failed`, `Timeout` ou `Unsupported`. |
+| `Data` | Réponse métier définie par le compagnon. |
+| `Execution` | Code de sortie, durée, état d’analyse et compteurs d’étapes selon le contexte. |
+| `Error` | Diagnostic structuré, ou `null`. |
+| `Truncation` | Indicateur `Applied` et raisons des omissions ou du masquage. |
 
-```powershell
-Invoke-QuietTask -MaxOutputBytes 2048 -AsJson {
-    $inspection = Invoke-QuietStep inspect {
-        Invoke-QuietCli -FilePath mon-cli -ArgumentList @('inspect', '--json') `
-            -Parse {
-                param($capture)
-                $report = ConvertFrom-Json $capture.Stdout -ErrorAction Stop
-                [pscustomobject]@{ Count=$report.count; State=$report.state }
-            }
-    }
+Vérifiez ensemble **le statut**, **la complétude de l’analyse**, **la présence des faits métier** et **les omissions**. Un `Success` ne garantit pas que `.Data` répond à votre question. Une valeur inconnue reste `null`. Pour une tâche composée, `Execution.ExitCode` est `null` ; les compteurs décrivent les étapes.
 
-    if ($inspection.Outcome -ne 'Success') { return }
+| Situation | Interprétation et action |
+| --- | --- |
+| `Failed` / `NativeFailed` | Le programme a renvoyé un code non accepté. Vérifier le code, les arguments et les diagnostics sélectionnés. |
+| `Failed` / `ParserFailed` | Le format ou le contrat du parseur est invalide. Corriger l’analyse. |
+| `Timeout` | La commande n’a pas terminé dans le délai. Revoir le périmètre ou le délai avant toute nouvelle exécution. |
+| `CaptureLimit` / `RecordLimit` | L’analyse ne dispose pas d’une source complète. Adapter le mode de lecture, le périmètre ou la limite. |
+| `OutputBudget` | La transmission a dépassé le budget ; `.Data` peut être `null`. Réduire la projection ou augmenter explicitement le budget. |
+| `SensitiveData` | Le runtime a masqué des valeurs sensibles reconnues. Inspecter ce qui reste exploitable. |
 
-    [pscustomobject]@{
-        Count = $inspection.Data.Count
-        State = $inspection.Data.State
-    }
-}
-```
+Les tâches composées regroupent les incidents sous `Error.Code = TaskFailed` et exposent les étapes concernées dans `Error.Issues`. Le runtime applique un masquage de secrets connus et des limites de champs ; sélectionnez aussi les diagnostics utiles dans vos compagnons, car ce masquage n’identifie pas toute donnée confidentielle possible.
 
-`mon-cli` and its fields are illustrative: the parser must follow the documented format of the tool being used. For long streams, the stack supports `-State`, `-OnRecord`, and `-Complete`.
+Le résultat métier est décrit par l’enveloppe. Un script qui l’affiche peut se terminer avec un code de processus `0` tout en annonçant `Outcome: Failed` : un appelant doit lire l’enveloppe. Le lanceur de tests, lui, définit explicitement ses codes de sortie.
 
-**Every call whose result is consumed locally must go through `Invoke-QuietStep`.** Assigning a variable does not automatically make its value visible to the aggregator. The task body emits the final domain projection; `-AsJson` produces a single document.
+## QuietCli et RTK
 
-The [skill](skills/quiet-cli/SKILL.md) covers document and streaming workflows, limits and nested tasks; the [runtime source](src/QuietCli.psm1) defines the exact callbacks and parameters.
+Le [README de RTK](https://github.com/rtk-ai/rtk) présente une entrée rapide, des exemples concrets et une explication des gains. QuietCli reprend ici cette progression de lecture, avec un fonctionnement centré sur les compagnons.
 
-## Completeness, omissions, and budget
+| Besoin | RTK | QuietCli |
+| --- | --- | --- |
+| Réduire la sortie d’outils courants | Filtres et commandes fournis par RTK. | Parser et projection écrits ou réutilisés dans un compagnon. |
+| Définir une réponse métier propre à la demande | Consulter les possibilités d’extension de la version RTK utilisée. | `.Data` est libre et calculée par votre script. |
+| Enchaîner plusieurs observations | Dépend du workflow configuré. | Variables locales, conditions et étapes dans `Invoke-QuietTask`. |
+| Charger l’outil au démarrage | Installation et intégration propres à RTK. | `Import-Module` dans le profil PowerShell ; appel explicite des compagnons. |
 
-Distinguish three aspects when interpreting the result:
+Pour évaluer un gain, comparez des tâches équivalentes avec le même tokenizer et la même réponse attendue. Comptez aussi la lecture des instructions, la génération du compagnon, son débogage et les relances. Séparez le coût de création de celui de la réutilisation. Une réduction d’octets de sortie ne suffit pas à établir une économie globale.
 
-| Aspect | Question to ask |
-|---|---|
-| Analysis | Was the data within the selected scope analyzed correctly? |
-| Domain answer | Do the available properties answer this question? |
-| Transmission | Were any fields or examples omitted to stay within the budget? |
+## Vérifier l’installation
 
-A search may have analyzed the entire scope and found three lines while retaining only one example. The count can answer a "how many?" question. That preview does not provide all the lines.
-
-Together, `Execution.AnalysisComplete`, the domain-specific completeness indicators in `.Data`, and `Truncation` support the decision. An unknown value remains `null`. A failure, malformed output, or timeout must not become an empty result assumed to be correct.
-
-The prompt suggests **4096 UTF-8 bytes** by default, reduced to **2048 bytes** when the answer allows it. The budget applies to **the entire task**: twenty individually limited results can still produce excessive output if they are all transmitted.
-
-In QuietCli, a `.Data` value that exceeds the budget can become `null`, with `Truncation.Applied=true` and `OutputBudget`. In that case, project or aggregate more locally, or request a narrower scope.
-
-Output limits do not prematurely stop a necessary analysis. The timeout is a separate execution limit. A reducer's state must also remain bounded: counters and a small sample rather than an accumulation of every event.
-
-## Best practices
-
-- Preserve the intended command's arguments, working directory, scope, and effects. Machine-readable format options must retain the required information.
-- Capture stdout and stderr simultaneously, then extract the relevant data.
-- Pass arguments as a list; use an explicit interpreter for scripts and shell syntax.
-- Preserve errors and completeness conditions in the common object.
-- Return selected, sanitized diagnostics. Redaction rules complement this selection.
-- Test parsers against successes, failures, malformed output, omissions, and timeouts.
-- Reuse functions or modules whose contract covers the new request. Revalidate assumptions when the format or need changes.
-
-Creating and maintaining scripts, along with any additional requests, has a cost. To measure token savings, compare equivalent tasks using the same tokenizer, including the creation work and the output actually read by the model.
-
-## Files and verification
-
-| File | Contents |
-|---|---|
-| [src/QuietCli.psm1](src/QuietCli.psm1) | PowerShell runtime implementation and exact parameters. |
-| [QuietCli.PoSh.psd1](QuietCli.PoSh.psd1) | Module manifest. |
-| [QuietCli.PoSh.psm1](QuietCli.PoSh.psm1) | Module loader; reuses the implementation under `src/`. |
-| [examples/Generated-NoisyJob.ps1](examples/Generated-NoisyJob.ps1) | Two-step task with event reduction. |
-| [examples/Generated-GitOverview.ps1](examples/Generated-GitOverview.ps1) | Git overview in PowerShell. |
-| [examples/generated-git-status.sh](examples/generated-git-status.sh) | Git overview in Bash. |
-| [test/Smoke.Tests.ps1](test/Smoke.Tests.ps1) | Stack checks using real processes. |
-| [test/test_examples.py](test/test_examples.py) | Example tests using temporary repositories. |
-| [test/Invoke-Tests.ps1](test/Invoke-Tests.ps1) | Common launcher with dependency checks and one bounded report. |
-
-The current sources passed these checks on October 14, 2026:
-
-| Environment | Runtime checks | Integration checks | Report |
-|---|---|---|---|
-| Windows, PowerShell 7.6.6, Python 3.13.16 | 24 passed | 5 passed; 2 POSIX Bash cases explicitly skipped | [Windows](verification/windows-tests.json) |
-| Debian 13, PowerShell 7.4.20, Python 3.13.5 | 24 passed | 7 passed, including both Bash cases | [Linux](verification/linux-tests.json) |
-
-Both reports identify the same source SHA-256 hashes and include the execution time, OS, and runtime versions. The earlier [PowerShell](verification/powershell-tests.json) and [example](verification/examples-tests.json) reports are historical snapshots.
-
-Run the full suite from the module directory with a working Python 3 executable. Git is required for integration tests; Linux also needs Bash, awk, jq, and GNU `timeout`:
+La suite runtime n’a besoin ni de Python ni de Git :
 
 ```powershell
-pwsh -NoLogo -NoProfile -File ./test/Invoke-Tests.ps1 -Python python3 `
-    -OutputPath ./verification/local-tests.json
+pwsh -NoLogo -NoProfile -File (Join-Path $moduleRoot 'test/Invoke-Tests.ps1') -RuntimeOnly
 ```
 
-On Windows, use `-Python python` or the full interpreter path when appropriate. An inactive WindowsApps alias is detected as a missing prerequisite. A missing dependency produces one `Unsupported` result and exit code 2; failing checks produce exit code 1. The launcher runs the smoke suite and each PowerShell integration case in fresh processes so already loaded C# types cannot hide source changes.
-
-The runtime-only checks do not need Python or Git:
+Pour la suite complète, installez les prérequis correspondant à votre environnement, puis choisissez votre exécutable Python :
 
 ```powershell
-pwsh -NoLogo -NoProfile -File ./test/Invoke-Tests.ps1 -RuntimeOnly
+$testReport = Join-Path ([IO.Path]::GetTempPath()) 'quietcli-local-tests.json'
+pwsh -NoLogo -NoProfile -File (Join-Path $moduleRoot 'test/Invoke-Tests.ps1') `
+    -Python python3 -OutputPath $testReport
 ```
 
-The regressions cover empty and singleton arrays, nested collections, empty objects, large numeric metadata, and the final UTF-8 output budget. Git integration also checks detached HEAD, an unborn repository, renames, Unicode paths, and invalid repositories. Windows uses valid filenames; Linux additionally exercises a filename containing a newline. Bash skips are reported separately from passing tests.
+Le lanceur retourne un rapport JSON borné. Son code de sortie vaut `0` en cas de réussite, `1` en cas d’échec et `2` si un prérequis manque (`Unsupported`). Les cas Bash ignorés sous Windows sont comptés séparément.
 
-The [QuietCli workflow](https://github.com/FrenchExDev/FrenchExDev/blob/develop/.github/workflows/quietcli.yml) runs the full launcher on Windows and Ubuntu and publishes the bounded JSON reports. Its remote execution requires committing and pushing the workflow.
+Les rapports conservés, **datés du 14 octobre 2026**, décrivent les sources identifiées par leurs SHA-256 :
 
-## Measuring the complete cost
+| Environnement enregistré | Runtime | Intégration | Rapport |
+| --- | --- | --- | --- |
+| Windows, PowerShell 7.6.6, Python 3.13.16 | 24 réussis | 5 réussis, 2 cas Bash ignorés | [Windows](verification/windows-tests.json) |
+| Debian 13, PowerShell 7.4.20, Python 3.13.5 | 24 réussis | 7 réussis | [Linux](verification/linux-tests.json) |
 
-The [demonstration measurements](verification/demo-measurements.json) describe event counts and the final JSON size. They do not measure total agent token use, latency, or financial savings.
+Ces rapports sont des instantanés. Ils ne remplacent pas l’exécution de la suite sur votre version installée. Les vérifications couvrent notamment les échecs natifs, timeouts, sorties malformées, limites, tableaux vides ou unitaires, agrégation d’échecs et cas Git particuliers.
 
-For a comparable measurement, use the same task, input snapshot, commands, and required answer in three cases: direct output, a newly authored companion, and reuse of that companion. Include the model tokens used to read documentation, generate and debug the script, inspect results, and make follow-up calls. Record end-to-end wall time and verify that all three cases give the same complete answer. Report the first-use cost separately from repeated use; a reduction in output bytes alone does not establish an overall saving.
+## Dépannage
+
+| Symptôme | Vérification ou correction |
+| --- | --- |
+| « Aucun fichier de module valide » | Vérifier le chemin complet et le nom **`QuietCli.PoSh.psd1`**. Le nom du dossier n’est pas celui du manifeste. |
+| Le module fonctionne ici, mais pas dans un nouveau terminal | Vérifier la section QuietCli dans `$PROFILE.CurrentUserAllHosts` et lancer `pwsh` sans `-NoProfile`. |
+| Le terminal fonctionne, mais pas l’hôte PowerShell de VS Code | Vérifier que l’hôte utilise PowerShell 7 et charge le profil commun ; un profil propre à l’hôte peut ensuite modifier la session. |
+| Le compagnon ne trouve pas Git ou Python | Vérifier le `PATH` du processus et le nom de l’exécutable. Utiliser un chemin absolu si nécessaire. |
+| Un script téléchargé est bloqué sous Windows | Examiner la provenance et la politique effective avec `Get-ExecutionPolicy -List`. Si le fichier est approuvé et seulement marqué comme téléchargé, utiliser `Unblock-File -LiteralPath <fichier>`. |
+| `.Data` vaut `null` | Lire `Outcome`, `Error` et `Truncation.Reasons` ; rechercher notamment `OutputBudget`. |
+| Une étape échouée disparaît du bilan | Encadrer son appel avec `Invoke-QuietStep` dans `Invoke-QuietTask`. |
+| Une modification du runtime semble ignorée | Recommencer dans un nouveau processus `pwsh -NoProfile` : les types C# déjà chargés restent présents dans la session. |
+
+## Sources et exemples
+
+| Ressource | Contenu |
+| --- | --- |
+| [Skill](skills/quiet-cli/SKILL.md) | Instructions à fournir à l’agent et contrats de compagnons. |
+| [Manifeste](QuietCli.PoSh.psd1) et [runtime](src/QuietCli.psm1) | Version, exports et comportement exact. |
+| [Session native C#](src/NativeSession.cs) | Exécution et lecture des flux. |
+| [Git PowerShell](examples/Generated-GitOverview.ps1) et [Git Bash](examples/generated-git-status.sh) | Compagnons d’inspection de dépôt. |
+| [Décision de revue](examples/Invoke-RepositoryDecision.ps1) | Réutilisation d’un compagnon et composition. |
+| [Tâche bruyante](examples/Generated-NoisyJob.ps1) | Réduction streaming et validation de deux étapes. |
+| [Lanceur de tests](test/Invoke-Tests.ps1) | Vérification runtime et intégration. |
+| [Générateur d’archive](scripts/New-QuietCliArchive.ps1) | Reconstruction du ZIP et des empreintes de distribution. |
+
+Pour contribuer, accompagnez les changements de parseur de cas de succès, d’échec, de format invalide et de limites. Conservez le sens des unités, le périmètre analysé et les informations nécessaires à la décision dans le contrat du compagnon.
+
+Publié sous [licence MIT](LICENSE). Auteur : Stéphane Erard / FrenchExDev.
