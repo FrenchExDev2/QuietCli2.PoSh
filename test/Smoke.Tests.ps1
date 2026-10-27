@@ -3,7 +3,7 @@
 [CmdletBinding()]
 param([string]$Python='python3', [switch]$RuntimeOnly)
 $ErrorActionPreference='Stop'
-Import-Module (Join-Path $PSScriptRoot '../QuietCli.PoSh.psd1') -Force
+Import-Module (Join-Path $PSScriptRoot '../FrenchExDev.QuietCli.PoSh.psd1') -Force
 if (!$RuntimeOnly) {
     $dependency=Invoke-QuietCli -FilePath $Python -ArgumentList @('-c',
         'import json,sys; print(json.dumps({"major":sys.version_info.major,"version":sys.version.split()[0]})); sys.exit(0 if sys.version_info.major == 3 else 1)') `

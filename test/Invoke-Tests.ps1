@@ -5,7 +5,7 @@ param([string]$Python='python3', [switch]$RuntimeOnly, [string]$OutputPath)
 $ErrorActionPreference='Stop'
 Set-StrictMode -Version 3
 $moduleRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-Import-Module (Join-Path $moduleRoot 'QuietCli.PoSh.psd1') -ErrorAction Stop
+Import-Module (Join-Path $moduleRoot 'FrenchExDev.QuietCli.PoSh.psd1') -ErrorAction Stop
 $pwsh=(Get-Process -Id $PID).Path
 
 function Invoke-TestSuite {
