@@ -1,0 +1,39 @@
+{
+  "SchemaVersion": 1,
+  "Summary": "Task: 2 steps; 0 failed; 0 timed out.",
+  "Outcome": "Success",
+  "Data": {
+    "Operation": "prepare-and-validate",
+    "AnswerComplete": true,
+    "Prepared": 2000,
+    "Validated": 2000,
+    "Stages": [
+      {
+        "Stage": "prepare",
+        "Processed": 2000,
+        "DiagnosticRecords": 2000
+      },
+      {
+        "Stage": "validate",
+        "Processed": 2000,
+        "DiagnosticRecords": 2000
+      }
+    ]
+  },
+  "Execution": {
+    "ScriptErrors": 0,
+    "Truncated": 0,
+    "Unsupported": 0,
+    "AnalysisComplete": true,
+    "ExitCode": null,
+    "Failed": 0,
+    "Steps": 2,
+    "ElapsedMs": 2267,
+    "Timeouts": 0
+  },
+  "Error": null,
+  "Truncation": {
+    "Applied": false,
+    "Reasons": []
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "RecordsPerStage": 2000,
+  "Stages": 2,
+  "ProgressRecordsConsumed": 4000,
+  "DiagnosticRecordsConsumed": 4000,
+  "FinalJsonBytesExcludingNewline": 533,
+  "BudgetBytes": 2048,
+  "PowerShell": "7.4.20",
+  "TokenSavingsMeasured": false
+}

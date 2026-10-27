@@ -1,0 +1,90 @@
+{
+  "SchemaVersion": 1,
+  "Summary": "18 checks passed; 0 failed.",
+  "Outcome": "Success",
+  "Data": {
+    "Checks": [
+      {
+        "Passed": true,
+        "Name": "Data preserves object, scalar, array and null shapes"
+      },
+      {
+        "Passed": true,
+        "Name": "Arguments preserve spaces, quotes and shell-looking text"
+      },
+      {
+        "Passed": true,
+        "Name": "Native failure remains failure even with parseable JSON"
+      },
+      {
+        "Passed": true,
+        "Name": "Caller can explicitly accept a nonzero functional exit code"
+      },
+      {
+        "Passed": true,
+        "Name": "Missing executable returns a structured failure"
+      },
+      {
+        "Passed": true,
+        "Name": "Document capture overflow never parses a clipped document"
+      },
+      {
+        "Passed": true,
+        "Name": "Large concurrent stdout and stderr are drained with exact counters"
+      },
+      {
+        "Passed": true,
+        "Name": "Oversized stream record produces an uncertified failure"
+      },
+      {
+        "Passed": true,
+        "Name": "Parser failure drains the command without relaunch or raw fallback"
+      },
+      {
+        "Passed": true,
+        "Name": "Malformed machine output does not become a success"
+      },
+      {
+        "Passed": true,
+        "Name": "Timeout is distinct from capture and output limits"
+      },
+      {
+        "Passed": true,
+        "Name": "Known sensitive fields are masked and omissions reported"
+      },
+      {
+        "Passed": true,
+        "Name": "An oversized projection cannot exceed the final byte budget"
+      },
+      {
+        "Passed": true,
+        "Name": "Twenty assigned failures retain aggregate counters under 1 KiB"
+      },
+      {
+        "Passed": true,
+        "Name": "Oversized metadata cannot defeat the transport byte limit"
+      },
+      {
+        "Passed": true,
+        "Name": "Repeated emission of the same step envelope is not double-counted"
+      },
+      {
+        "Passed": true,
+        "Name": "An assigned timeout survives the final projection"
+      },
+      {
+        "Passed": true,
+        "Name": "Generated multi-stage script returns exactly one bounded document"
+      }
+    ],
+    "PowerShell": "7.4.20",
+    "Passed": 18,
+    "Failed": 0
+  },
+  "Execution": {},
+  "Error": null,
+  "Truncation": {
+    "Applied": false,
+    "Reasons": []
+  }
+}

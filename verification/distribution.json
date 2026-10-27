@@ -1,0 +1,29 @@
+{
+  "Outcome": "Success",
+  "CheckedDate": "2026-10-14",
+  "ExecutedAtUtc": "2026-10-14T02:09:17.1239268Z",
+  "ArchiveSHA256": "a39188e96ed60ce5658bd8f65b4903abf8368c5a7a996b47a538f9298fad7f9b",
+  "FilesVerified": 27,
+  "ExtractedDocumentationLinks": 31,
+  "ExtractedRuntimeChecksPassed": 14,
+  "ExtractedRuntimeChecksFailed": 0,
+  "ReproducibleArchive": true,
+  "Windows": {
+    "IntegrationPassed": 5,
+    "BashSkipped": 2,
+    "Python": "3.13.16",
+    "SmokePassed": 24,
+    "PowerShell": "7.6.6"
+  },
+  "Linux": {
+    "Skipped": 0,
+    "IntegrationPassed": 7,
+    "Python": "3.13.5",
+    "SmokePassed": 24,
+    "PowerShell": "7.4.20"
+  },
+  "SourceHashesVerified": true,
+  "WorkflowYamlValidated": true,
+  "GitHubWorkflowExecuted": false,
+  "RemoteGitHubAvailabilityVerified": false
+}

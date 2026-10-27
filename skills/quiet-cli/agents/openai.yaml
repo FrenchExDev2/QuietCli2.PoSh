@@ -1,0 +1,6 @@
+interface:
+  display_name: "Quiet CLI"
+  short_description: "Reduce CLI output before the AI reads it"
+  default_prompt: "Use $quiet-cli to write a companion script that answers my question with a single bounded JSON result."
+policy:
+  allow_implicit_invocation: true

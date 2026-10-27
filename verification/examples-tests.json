@@ -1,0 +1,22 @@
+{
+  "Passed": 4,
+  "Failed": 0,
+  "Checks": [
+    {
+      "Name": "PowerShell clean Git repository",
+      "Passed": true
+    },
+    {
+      "Name": "PowerShell Git rename and unusual untracked path",
+      "Passed": true
+    },
+    {
+      "Name": "Bash reducer matches the selected Git counts",
+      "Passed": true
+    },
+    {
+      "Name": "Bash native failure emits one structured result",
+      "Passed": true
+    }
+  ]
+}

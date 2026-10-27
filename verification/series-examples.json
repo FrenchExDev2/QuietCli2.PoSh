@@ -1,0 +1,164 @@
+{
+  "CheckedDate": "2026-10-12",
+  "ExecutedAtUtc": "2026-10-12T10:10:17.4249786Z",
+  "Outcome": "Success",
+  "PowerShell": "7.6.6",
+  "Git": "git version 2.55.0.windows.3",
+  "PythonVersion": "Python 3.13.5",
+  "ModuleVersion": "0.1.0",
+  "Python": "python3",
+  "PythonImage": "localhost/frenchexdev-pandoc-pdf:1",
+  "StreamingMode": "Podman adapter; original Python fixture; native Python companion not executed",
+  "RtkExecuted": false,
+  "Benchmark": false,
+  "Passed": 15,
+  "Failed": 0,
+  "Checks": [
+    {
+      "Name": "document-success",
+      "Passed": true,
+      "Observed": {
+        "Outcome": "Success",
+        "Count": 3
+      }
+    },
+    {
+      "Name": "malformed-is-not-empty-success",
+      "Passed": true,
+      "Observed": {
+        "Code": "ParserFailed",
+        "Outcome": "Failed",
+        "DataIsNull": true
+      }
+    },
+    {
+      "Name": "native-failure",
+      "Passed": true,
+      "Observed": {
+        "Code": "NativeFailed",
+        "Outcome": "Failed",
+        "ExitCode": 7
+      }
+    },
+    {
+      "Name": "timeout",
+      "Passed": true,
+      "Observed": {
+        "Outcome": "Timeout",
+        "Code": "Timeout"
+      }
+    },
+    {
+      "Name": "capture-limit",
+      "Passed": true,
+      "Observed": {
+        "Code": "CaptureLimit",
+        "Outcome": "Failed",
+        "Truncated": true
+      }
+    },
+    {
+      "Name": "record-limit",
+      "Passed": true,
+      "Observed": {
+        "Outcome": "Failed",
+        "Code": "RecordLimit"
+      }
+    },
+    {
+      "Name": "output-budget",
+      "Passed": true,
+      "Observed": {
+        "Bytes": 190,
+        "DataIsNull": true,
+        "Reasons": [
+          "OutputBudget"
+        ]
+      }
+    },
+    {
+      "Name": "consumed-failure-remains-visible",
+      "Passed": true,
+      "Observed": {
+        "Outcome": "Failed",
+        "UnknownRemainsNull": true,
+        "Failed": 1
+      }
+    },
+    {
+      "Name": "unknown-does-not-become-zero",
+      "Passed": true,
+      "Observed": {
+        "AnswerComplete": false,
+        "Count": null
+      }
+    },
+    {
+      "Name": "git-clean",
+      "Passed": true,
+      "Observed": {
+        "Branch": "main",
+        "Detached": false,
+        "Changed": 0,
+        "Untracked": 0,
+        "Clean": true,
+        "AnswerComplete": true
+      }
+    },
+    {
+      "Name": "git-changed-and-directory-entry",
+      "Passed": true,
+      "Observed": {
+        "Branch": "main",
+        "Detached": false,
+        "Changed": 1,
+        "Untracked": 1,
+        "Clean": false,
+        "AnswerComplete": true
+      }
+    },
+    {
+      "Name": "reused-companion-composition",
+      "Passed": true,
+      "Observed": {
+        "Bytes": 565,
+        "Outcome": "Success",
+        "RelativeRootTested": true,
+        "NeedsReview": true,
+        "Steps": 3
+      }
+    },
+    {
+      "Name": "git-rename-entry",
+      "Passed": true,
+      "Observed": {
+        "Branch": "main",
+        "Detached": false,
+        "Changed": 1,
+        "Untracked": 0,
+        "Clean": false,
+        "AnswerComplete": true
+      }
+    },
+    {
+      "Name": "git-detached-head",
+      "Passed": true,
+      "Observed": {
+        "Branch": "",
+        "Detached": true
+      }
+    },
+    {
+      "Name": "streaming-two-stages",
+      "Passed": true,
+      "Observed": {
+        "Bytes": 533,
+        "Outcome": "Success",
+        "Steps": 2,
+        "Validated": 2000,
+        "Prepared": 2000,
+        "Adapter": "Podman: original Python fixture and supplied reduction rules"
+      }
+    }
+  ]
+}
