@@ -88,6 +88,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           & (Join-Path $env:MODULE_DIR 'test/Invoke-Tests.ps1') -Analyze -OutputPath (Join-Path $env:RUNNER_TEMP 'quietcli-tests.json')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Import-Module (Join-Path $env:MODULE_DIR 'FrenchExDev.QuietCli.PoSh.psd1') -DisableNameChecking
           $git = Join-Path (Split-Path $env:MODULE_DIR) 'FrenchExDev.QuietCli.Git.PoSh'
           if (Test-Path $git) {

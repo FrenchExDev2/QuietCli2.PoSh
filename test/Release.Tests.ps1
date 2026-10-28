@@ -222,7 +222,7 @@ Describe 'Release workflow connections' {
     It 'starts every Linux job on Alpine without requiring a custom image variable' {
         $jobs = @($TestWorkflow.jobs.linux, $ReleaseWorkflow.jobs.package, $ReleaseWorkflow.jobs.publish)
         foreach ($job in $jobs) {
-            $job.container.image | Should -BeExactly "${{ vars.QUIETCLI_LINUX_IMAGE || 'alpine:3.24' }}"
+            $job.container.image | Should -BeExactly '${{ vars.QUIETCLI_LINUX_IMAGE || ''alpine:3.24'' }}'
             $job.steps[0].name | Should -BeExactly 'Prepare Git for checkout'
             $job.steps[0].shell | Should -BeExactly sh
             $checkout = -1
