@@ -219,6 +219,25 @@ Describe 'Release workflow connections' {
         $ReleaseWorkflow.jobs.package.container.options | Should -BeExactly '--init'
         $ReleaseWorkflow.jobs.publish.container.options | Should -BeExactly '--init'
     }
+    It 'starts every Linux job on Alpine without requiring a custom image variable' {
+        $jobs = @($TestWorkflow.jobs.linux, $ReleaseWorkflow.jobs.package, $ReleaseWorkflow.jobs.publish)
+        foreach ($job in $jobs) {
+            $job.container.image | Should -BeExactly "${{ vars.QUIETCLI_LINUX_IMAGE || 'alpine:3.24' }}"
+            $job.steps[0].name | Should -BeExactly 'Prepare Git for checkout'
+            $job.steps[0].shell | Should -BeExactly sh
+            $checkout = -1
+            $initialize = -1
+            for ($index = 0; $index -lt $job.steps.Count; $index++) {
+                if ($job.steps[$index].uses -eq 'actions/checkout@v4') { $checkout = $index }
+                if ($job.steps[$index].name -eq 'Initialize PowerShell 7.6+ Core') { $initialize = $index }
+            }
+            $checkout | Should -BeGreaterThan 0
+            $initialize | Should -BeGreaterThan $checkout
+            $job.steps[$initialize].shell | Should -BeExactly sh
+            $job.steps[$initialize].run | Should -Match 'Initialize-QuietCliLinux.sh'
+        }
+        $TestWorkflow.jobs.Keys | Should -Not -Contain runtime
+    }
     It 'triggers on version tags and limits release write permission to publication' {
         $ReleaseWorkflow.on.push.tags | Should -Contain 'v*'
         $ReleaseWorkflow.permissions.contents | Should -Be read
