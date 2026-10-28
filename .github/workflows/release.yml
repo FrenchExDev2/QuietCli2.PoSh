@@ -38,6 +38,8 @@ jobs:
           set -eu
           if command -v apk >/dev/null 2>&1; then
             apk add --no-cache git ca-certificates libstdc++
+            # Objectif : Fournir Node.js aux actions JavaScript quand act remplace le runner GitHub.
+            if [ "${ACT:-}" = "true" ]; then apk add --no-cache nodejs; fi
           elif ! command -v git >/dev/null 2>&1; then
             command -v apt-get >/dev/null 2>&1 || { echo 'The Linux image must provide Git or a supported package manager.' >&2; exit 1; }
             apt-get update -qq
@@ -79,6 +81,7 @@ jobs:
           if-no-files-found: error
 
   publish:
+    if: ${{ !github.event.act }}
     needs: [test, package]
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -102,6 +105,8 @@ jobs:
           set -eu
           if command -v apk >/dev/null 2>&1; then
             apk add --no-cache git ca-certificates libstdc++
+            # Objectif : Fournir Node.js aux actions JavaScript quand act remplace le runner GitHub.
+            if [ "${ACT:-}" = "true" ]; then apk add --no-cache nodejs; fi
           elif ! command -v git >/dev/null 2>&1; then
             command -v apt-get >/dev/null 2>&1 || { echo 'The Linux image must provide Git or a supported package manager.' >&2; exit 1; }
             apt-get update -qq
@@ -126,6 +131,7 @@ jobs:
           name: QuietCli-release
           path: ${{ runner.temp }}/quietcli-release
       - name: Publish the verified package to PowerShell Gallery
+        if: ${{ !env.ACT }}
         env:
           PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
         run: |
@@ -138,6 +144,7 @@ jobs:
           }
           & (Join-Path $root 'scripts/Publish-QuietCliPackage.ps1') -PackagePath (Join-Path $assets $manifest.PackageFile) -ManifestPath (Join-Path $assets 'QuietCli.manifest.json') -ModuleRoot $root -Tag $env:RELEASE_TAG -Confirm:$false
       - name: Create the GitHub release and attach the verified assets
+        if: ${{ !env.ACT }}
         uses: actions/github-script@v7
         env:
           ASSET_DIRECTORY: ${{ runner.temp }}/quietcli-release

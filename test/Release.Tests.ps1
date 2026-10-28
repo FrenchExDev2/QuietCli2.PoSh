@@ -238,10 +238,31 @@ Describe 'Release workflow connections' {
         }
         $TestWorkflow.jobs.Keys | Should -Not -Contain runtime
     }
+    It 'disables external publication when the workflow is emulated locally' {
+        $ReleaseWorkflow.jobs.publish.if | Should -BeExactly '${{ !github.event.act }}'
+        $external = @($ReleaseWorkflow.jobs.publish.steps | Where-Object { $_.name -match '^Publish the verified package|^Create the GitHub release' })
+        $external.Count | Should -Be 2
+        foreach ($step in $external) { $step.if | Should -BeExactly '${{ !env.ACT }}' }
+        $TestWorkflow.jobs.linux.steps[0].run | Should -Match 'ACT'
+        $TestWorkflow.jobs.linux.steps[0].run | Should -Match 'nodejs'
+    }
     It 'triggers on version tags and limits release write permission to publication' {
         $ReleaseWorkflow.on.push.tags | Should -Contain 'v*'
         $ReleaseWorkflow.permissions.contents | Should -Be read
         $ReleaseWorkflow.jobs.publish.permissions.contents | Should -Be write
         @($TestWorkflow.jobs.Keys | Where-Object { $_ -in @('gallery','release-assets') }).Count | Should -Be 0
+    }
+}
+
+Describe 'Local CI tool cache integrity' {
+    It 'rejects a modified cached executable without replacing it or installing another tool' {
+        $cache = Join-Path $TestDrive 'invalid-local-tools'
+        $directory = Join-Path $cache 'act/0.2.91'
+        [void][IO.Directory]::CreateDirectory($directory)
+        $binary = Join-Path $directory 'act'
+        [IO.File]::WriteAllText($binary, 'unexpected executable')
+        { & (Join-Path $ReleaseRoot 'scripts/Install-QuietCliLocalTools.ps1') -Destination $cache } | Should -Throw '*Cached act checksum mismatch*'
+        [IO.File]::ReadAllText($binary) | Should -BeExactly 'unexpected executable'
+        Test-Path (Join-Path $cache 'actionlint') | Should -BeFalse
     }
 }

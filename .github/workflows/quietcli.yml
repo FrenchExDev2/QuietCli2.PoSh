@@ -36,6 +36,8 @@ jobs:
           set -eu
           if command -v apk >/dev/null 2>&1; then
             apk add --no-cache git ca-certificates libstdc++
+            # Objectif : Fournir Node.js aux actions JavaScript quand act remplace le runner GitHub.
+            if [ "${ACT:-}" = "true" ]; then apk add --no-cache nodejs; fi
           elif ! command -v git >/dev/null 2>&1; then
             command -v apt-get >/dev/null 2>&1 || { echo 'The Linux image must provide Git or a supported package manager.' >&2; exit 1; }
             apt-get update -qq
@@ -90,8 +92,9 @@ jobs:
           & (Join-Path $env:MODULE_DIR 'test/Invoke-Tests.ps1') -Analyze -OutputPath (Join-Path $env:RUNNER_TEMP 'quietcli-tests.json')
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Import-Module (Join-Path $env:MODULE_DIR 'FrenchExDev.QuietCli.PoSh.psd1') -DisableNameChecking
-          $git = Join-Path (Split-Path $env:MODULE_DIR) 'FrenchExDev.QuietCli.Git.PoSh'
-          if (Test-Path $git) {
+          $parent = Split-Path -Parent ([IO.Path]::GetFullPath($env:MODULE_DIR))
+          $git = if ($parent) { Join-Path $parent 'FrenchExDev.QuietCli.Git.PoSh' } else { $null }
+          if ($git -and (Test-Path $git)) {
             $result = Test-QuietModule -Path $git -AsObject
             if ($result.Outcome -ne 'Success') { throw ($result.Data.Failures -join '; ') }
             $result | ConvertTo-QuietJson
@@ -115,3 +118,68 @@ jobs:
           name: QuietCli-distribution
           path: ${{ runner.temp }}/quietcli-artifacts/*
           if-no-files-found: error
+
+  dotnet-integration:
+    name: Alpine Serilog integration
+    needs: linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/dotnet/sdk:10.0-alpine3.24@sha256:cc02b814237a76c4735fb6eeee87181597b5e56f2ce458a435e527674d91f4d7
+      options: --init
+    defaults:
+      run:
+        shell: pwsh -NoLogo -NoProfile -File {0}
+    steps:
+      - name: Prepare Alpine actions
+        shell: sh
+        run: |
+          # Objectif : Fournir les outils requis par checkout et les actions JavaScript sous Alpine.
+          set -eu
+          apk add --no-cache git ca-certificates libstdc++
+          # Objectif : Fournir Node.js aux actions executees localement par act.
+          if [ "${ACT:-}" = "true" ]; then apk add --no-cache nodejs; fi
+      - uses: actions/checkout@v4
+      - name: Initialize integration PowerShell
+        shell: sh
+        run: |
+          # Objectif : Reutiliser amorcage PowerShell 7.6+ du depot.
+          set -eu
+          for root in "$GITHUB_WORKSPACE/PoSh/FrenchExDev/QuietCliEcosystem/FrenchExDev.QuietCli.PoSh" "$GITHUB_WORKSPACE/FrenchExDev.QuietCli.PoSh" "$GITHUB_WORKSPACE"; do
+            if [ -f "$root/.github/scripts/Initialize-QuietCliLinux.sh" ]; then
+              sh "$root/.github/scripts/Initialize-QuietCliLinux.sh"
+              exit 0
+            fi
+          done
+          echo 'QuietCli Linux bootstrap script was not found.' >&2
+          exit 1
+      - name: Locate integration harness
+        run: |
+          # Objectif : Trouver le script de qualification sans importer le module du checkout.
+          $ErrorActionPreference = 'Stop'
+          $candidates = @(
+            (Join-Path $env:GITHUB_WORKSPACE 'PoSh/FrenchExDev/QuietCliEcosystem/FrenchExDev.QuietCli.PoSh'),
+            (Join-Path $env:GITHUB_WORKSPACE 'FrenchExDev.QuietCli.PoSh'),
+            $env:GITHUB_WORKSPACE
+          )
+          $root = @($candidates | Where-Object { Test-Path (Join-Path $_ 'scripts/Test-QuietCliDotNetIntegration.ps1') })[0]
+          if (!$root) { throw 'QuietCli integration harness was not found.' }
+          "MODULE_DIR=$root" | Add-Content $env:GITHUB_ENV
+      - uses: actions/download-artifact@v4
+        with:
+          name: QuietCli-distribution
+          path: ${{ runner.temp }}/quietcli-integration-input
+      - name: Test ZIP on Alpine with Serilog
+        run: |
+          # Objectif : Qualifier le ZIP produit par la CI sur les vrais builds et tests Serilog.
+          $ErrorActionPreference = 'Stop'
+          $inputDirectory = Join-Path $env:RUNNER_TEMP 'quietcli-integration-input'
+          & (Join-Path $env:MODULE_DIR 'scripts/Test-QuietCliDotNetIntegration.ps1') -ArchivePath (Join-Path $inputDirectory 'QuietCli.zip') -ManifestPath (Join-Path $inputDirectory 'QuietCli.manifest.json') -OutputDirectory (Join-Path $env:RUNNER_TEMP 'quietcli-dotnet-integration')
+          exit $LASTEXITCODE
+      - name: Upload Alpine integration reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quietcli-dotnet-integration-alpine
+          path: ${{ runner.temp }}/quietcli-dotnet-integration/
+          if-no-files-found: warn

@@ -177,6 +177,33 @@ V2 intentionally changes V1's intermediate truncation, explicit step accounting 
 
 The current callback spelling and entry point were not used to produce the retained historical performance baseline. No new performance claim is made.
 
+## Local CI before pushing
+
+Run these commands from the module repository in PowerShell 7.6+ Core:
+
+```powershell
+# Objectif : Vérifier le YAML, les expressions GitHub et les connexions entre workflows.
+& ./scripts/Invoke-LocalCI.ps1 -Mode Lint
+
+# Objectif : Exécuter les tests et la construction du ZIP avec act et les artefacts locaux.
+& ./scripts/Invoke-LocalCI.ps1 -Mode CI
+
+# Objectif : Tester aussi le workflow réutilisable et le paquet NuGet, sans publication distante.
+& ./scripts/Invoke-LocalCI.ps1 -Mode Release
+```
+
+On Windows, start a Linux Podman machine first. The script uses the host only to start an owned Alpine controller with `--init`, detect and mount its Podman socket, and preserve the output directories. Tools, source analysis and workflow execution stay in Linux. On Linux x64, the script runs directly; `DOCKER_HOST` selects the Docker-compatible API and defaults to `unix:///run/podman/podman.sock`.
+
+The installer pins **act 0.2.91** and **actionlint 1.7.12**, verifies both downloaded archives and executables against SHA-256, and rechecks cached executables on subsequent calls. Tools and action downloads stay in the ignored `.local-ci/` directory. An unexpected cached checksum fails explicitly without overwriting the file.
+
+`Lint` validates both workflow files. `CI` then runs `quietcli.yml`, including its tests and standalone ZIP checks. `Release` emulates a version-tag event derived from the root manifest and also runs `release.yml` through NuGet packaging. The local event marks `act: true`; the publication job and its remote-write steps are disabled under act. The launcher supplies empty environment, variable and secret files instead of loading local publication secrets.
+
+Each invocation writes `artifacts/local-ci/<run>/local-ci.json` and stores workflow uploads beneath its `artifacts/` directory. Use `-OutputDirectory` to select another destination; a directory already containing a report is rejected to avoid mixing runs. The JSON report records tool versions, lint diagnostics, job/step results, test counts, completeness and the final outcome. Native output is analyzed through QuietCli and delivered as a bounded summary. The launcher does not retry failed commands automatically.
+
+The Alpine checkout bootstrap installs Node.js only when `ACT=true` because act requires Node in the job container. A local artifact server supports the workflow's v4 upload/download actions. See the [act usage guide](https://nektosact.com/usage/index.html) and [actionlint documentation](https://github.com/rhysd/actionlint).
+
+Local execution complements GitHub verification: act does not fully reproduce hosted-runner permissions, concurrency or deployment environments. Podman is exercised through its Docker-compatible API; act does not guarantee compatibility with every Podman version. GitHub remains the check for remote authorization and publication.
+
 ## Workflow-owned distribution
 
 The source tree contains no `modules/` distribution copy and no `downloads/` archive. `New-QuietCliArchive.ps1 -ValidateOnly` validates the inventory without creating a ZIP. Release ZIP and NuGet package creation run in GitHub Actions and use its temporary artifact directory.
@@ -209,3 +236,65 @@ Only the verified `.nupkg` is sent to PSGallery using [Publish-PSResource -Nupkg
 - `FrenchExDev.QuietCli.PoSh.<version>.nupkg`
 
 Ordinary pushes and pull requests run validation without publishing. A missing API key, mismatched version, checksum failure or unavailable Gallery stops publication explicitly. Gallery publication and GitHub release creation are separate remote operations: if the Gallery succeeds but GitHub fails, complete the GitHub release from the retained **QuietCli-release** workflow artifact; rerunning publication will reject the existing Gallery version. Local release tests use temporary files and mocked publication; they do not run remote CI or publish packages.
+
+## Alpine integration with a real .NET project
+
+The required Alpine integration job tests the workflow-generated **QuietCli ZIP** against
+[Serilog v4.4.0](https://github.com/serilog/serilog/releases/tag/v4.4.0), commit
+`6d9fc0b84e004418f2677b5961b9c8970349d0be`. It restores, builds and tests
+`test/Serilog.Tests/Serilog.Tests.csproj` in Release for `net10.0`.
+
+The fresh container uses `--init` and the pinned image
+`mcr.microsoft.com/dotnet/sdk:10.0-alpine3.24@sha256:cc02b814237a76c4735fb6eeee87181597b5e56f2ce458a435e527674d91f4d7`
+(SDK 10.0.403, PowerShell Core 7.6+). This qualifies Alpine Linux x64 only.
+The harness verifies the archive SHA-256, both file inventories and the bundled musl
+SQLite library before importing the extracted module in a fresh PowerShell process.
+It never imports QuietCli from the checkout.
+
+The temporary upstream copy receives two explicit dependency corrections:
+`System.Security.Cryptography.Xml 8.0.5` and `System.Security.Cryptography.Pkcs 8.0.2`.
+NuGet audit remains enabled for all dependencies and warnings remain errors.
+The pinned project initially executes **815 successful tests**. No upstream changes
+are committed; the temporary checkout and QuietCli database are removed after the run.
+
+The explicit consumer factory `test/integration/contracts/DotNet.Serilog.ps1` owns
+English MSBuild/VSTest console analysis; the engine has no dotnet catalogue.
+Independent TRX counters and individual result rows verify the console counts.
+The job also checks an identifiable compiler error, exactly one failing xUnit test,
+complete captures, deliveries bounded to 4096 UTF-8 bytes, altered/incomplete ZIP
+rejection, and successful replay after moving the original source directory and TRX files.
+The controlled failures are expected assertions, separate from the successful baseline.
+
+Both local modes include this job and require its successful structured result:
+
+```powershell
+# Objectif : Tester le workflow complet, dont le ZIP sur Alpine et les tests Serilog.
+./scripts/Invoke-LocalCI.ps1 -Mode CI
+
+# Objectif : Tester aussi le packaging de release sans publication distante.
+./scripts/Invoke-LocalCI.ps1 -Mode Release
+```
+
+To test an existing distribution **inside the pinned Alpine container**, start a fresh
+PowerShell process:
+
+```powershell
+# Objectif : Qualifier un ZIP existant avec son manifeste et conserver les rapports.
+pwsh -NoLogo -NoProfile -File ./scripts/Test-QuietCliDotNetIntegration.ps1 -ArchivePath /input/QuietCli.zip -ManifestPath /input/QuietCli.manifest.json -OutputDirectory /reports/serilog
+```
+
+Use a new output directory for every run. Public access to the image registry, GitHub,
+NuGet and Alpine packages is required. The job has a 20-minute limit and each native
+command a 600-second limit, with no automatic retry.
+
+The `quietcli-dotnet-integration-alpine` artifact contains `integration.json` and the
+baseline/expected-failure TRX reports. The JSON records image, SDK, PowerShell, source
+commit, dependency corrections, patched project hash, ZIP hash, phase outcomes and
+completeness. Local CI exposes `Integration` separately from QuietCli's own `Tests`.
+
+For a failure, inspect `integration.json` first: `Error` names the failed assertion
+and `Phases` identifies the native exit code and parsed diagnostics. Missing network
+prerequisites, audit findings, incomplete captures and absent TRX files fail the job;
+they never count as a successful zero-test run. An upstream dependency audit failure
+requires a reviewed dependency correction, while retaining the pinned source commit
+and recording the new patch provenance.
