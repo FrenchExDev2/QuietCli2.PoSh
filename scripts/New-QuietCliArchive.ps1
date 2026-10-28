@@ -1,25 +1,24 @@
-#requires -Version 7.4
+#requires -Version 7.6
 #requires -PSEdition Core
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName='Package')]
 param(
     [string]$ModuleRoot = (Join-Path $PSScriptRoot '..'),
-    [string]$OutputDirectory = '',
+    [Parameter(Mandatory,ParameterSetName='Package')][string]$OutputDirectory,
+    [Parameter(Mandatory,ParameterSetName='Inventory')][switch]$ValidateOnly,
     [string]$SourceCommitBase = '',
     [string]$SourceRef = 'develop'
 )
 $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath($ModuleRoot)
-if (!$OutputDirectory) { $OutputDirectory = Join-Path $root 'downloads' }
-$output = [IO.Path]::GetFullPath($OutputDirectory)
 $version = (Import-PowerShellDataFile (Join-Path $root 'FrenchExDev.QuietCli.PoSh.psd1')).ModuleVersion
 $paths = [Collections.Generic.List[string]]::new()
-foreach ($name in @('FrenchExDev.QuietCli.PoSh.psd1', 'FrenchExDev.QuietCli.PoSh.psm1', 'README.md', 'LICENSE')) {
+foreach ($name in @('FrenchExDev.QuietCli.PoSh.psd1', 'FrenchExDev.QuietCli.PoSh.psm1', 'README.md', 'LICENSE', 'THIRD-PARTY-NOTICES.md')) {
     if (!(Test-Path -LiteralPath (Join-Path $root $name) -PathType Leaf)) { throw "Missing package file: $name" }
     $paths.Add($name)
 }
-foreach ($folder in @('src', 'examples', 'fixtures', 'skills', 'test', 'scripts', 'verification')) {
+foreach ($folder in @('src', 'examples', 'fixtures', 'skills', 'test', 'scripts', 'verification', 'doc', 'resources', 'third_party')) {
     Get-ChildItem -LiteralPath (Join-Path $root $folder) -Recurse -File |
-        Where-Object { $_.Extension -ne '.pyc' -and $_.Name -ne 'distribution.json' -and $_.FullName -notmatch '[\\/]__pycache__[\\/]' } |
+        Where-Object { $_.Extension -notin @('.pyc','.sqlite','.sqlite3','.db','.zip','.nupkg') -and $_.Name -notin @('distribution.json','v2-distribution-check.json','v2-reproducibility.json','gain.html','quietcli-gain.html') -and $_.FullName -notmatch '[\\/](?:__pycache__|\.git|downloads|artifacts|\.quietcli)[\\/]' -and $_.Name -notmatch '\.(?:sqlite3?|db)-(?:wal|shm|journal)$' } |
         ForEach-Object { $paths.Add([IO.Path]::GetRelativePath($root, $_.FullName).Replace([char]92, [char]47)) }
 }
 # The distribution report stays outside the ZIP to avoid a circular archive hash.
@@ -27,16 +26,22 @@ $files = @($paths | Sort-Object | ForEach-Object {
     [ordered]@{ Path = $_; SHA256 = (Get-FileHash -LiteralPath (Join-Path $root $_) -Algorithm SHA256).Hash.ToLowerInvariant() }
 })
 $manifest = [ordered]@{
-    SchemaVersion = 1
+    SchemaVersion = 2
     ModuleVersion = $version
-    Repository = 'https://github.com/FrenchExDev/FrenchExDev'
-    ModulePath = 'PoSh/FrenchExDev/FrenchExDev.QuietCli.PoSh'
+    Repository = (Import-PowerShellDataFile (Join-Path $root 'FrenchExDev.QuietCli.PoSh.psd1')).PrivateData.PSData.ProjectUri
+    ModulePath = '.'
     SourceRef = $SourceRef
     SourceCommitBase = $SourceCommitBase
     SourceKind = 'WorkingTreeFiles; identify the packaged contents by their SHA256 hashes'
     Files = $files
 }
 $manifestJson = $manifest | ConvertTo-Json -Depth 6
+if($ValidateOnly){
+    [pscustomobject]@{Outcome='Success';Data=@{Mode='InventoryOnly';ModuleVersion=$version;Files=$files.Count;Manifest=$manifest}}|ConvertTo-Json -Depth 8 -Compress
+    return
+}
+if($env:GITHUB_ACTIONS -ne 'true'){throw 'Release ZIP creation is reserved for the GitHub Actions workflow. Use -ValidateOnly for local inventory validation.'}
+$output = [IO.Path]::GetFullPath($OutputDirectory)
 [void](New-Item -ItemType Directory -Path $output -Force)
 $archivePath = Join-Path $output 'QuietCli.zip'
 $stream = [IO.File]::Open($archivePath, [IO.FileMode]::Create, [IO.FileAccess]::ReadWrite)

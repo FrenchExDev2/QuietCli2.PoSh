@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Microsoft.ML.Tokenizers</id>
+    <version>2.0.0</version>
+    <authors>Microsoft</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>mlnetlogo.png</icon>
+    <readme>PACKAGE.md</readme>
+    <projectUrl>https://dot.net/ml</projectUrl>
+    <description>Microsoft.ML.Tokenizers contains the implmentation of the tokenization used in the NLP transforms.</description>
+    <releaseNotes>https://aka.ms/mlnetreleasenotes</releaseNotes>
+    <copyright>© Microsoft Corporation. All rights reserved.</copyright>
+    <tags>ML.NET ML Machine Learning</tags>
+    <serviceable>true</serviceable>
+    <repository type="git" url="https://github.com/dotnet/machinelearning" commit="efefa92f4486a43047c5b47618885a71bf7f0967" />
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="Google.Protobuf" version="3.30.2" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Google.Protobuf" version="3.30.2" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Bcl.HashCode" version="6.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Bcl.Memory" version="9.0.4" exclude="Build,Analyzers" />
+        <dependency id="System.Text.Json" version="9.0.4" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Bcl.AsyncInterfaces" version="9.0.4" exclude="Build,Analyzers" />
+        <dependency id="System.Buffers" version="4.6.1" exclude="Build,Analyzers" />
+        <dependency id="System.IO.Pipelines" version="9.0.4" exclude="Build,Analyzers" />
+        <dependency id="System.Memory" version="4.6.3" exclude="Build,Analyzers" />
+        <dependency id="System.Runtime.CompilerServices.Unsafe" version="6.1.2" exclude="Build,Analyzers" />
+        <dependency id="System.Text.Encodings.Web" version="9.0.4" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

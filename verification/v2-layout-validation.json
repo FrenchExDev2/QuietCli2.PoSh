@@ -1,0 +1,52 @@
+{
+  "SchemaVersion": 2,
+  "ExecutedAtUtc": "2026-10-28T16:54:39.4454060+00:00",
+  "Scope": "QuietCli ecosystem layout and Linux runtime",
+  "PowerShell": "7.6.7",
+  "Outcome": "Success",
+  "Acceptance": {
+    "Skipped": 0,
+    "ReportSHA256": "E97F14D46EA88C63B8AEEC8186E8E626BCF0FAF22EA7853597BB015BF56C3504",
+    "DiscoveryErrors": 0,
+    "AnalyzerDiagnostics": 0,
+    "Passed": 69,
+    "Failed": 0
+  },
+  "GitModules": [
+    {
+      "Hash": "A123DB9859F2951D0776DD0A2FD74F070329C6B24C803A9B4BA636A42D2EBDC9",
+      "Outcome": "Success",
+      "Checks": 15,
+      "Path": "FrenchExDev.QuietCli.Git.PoSh/FrenchExDev.QuietCli.Git.PoSh.psd1"
+    }
+  ],
+  "EngineModuleCopies": 0,
+  "SyntaxErrors": [],
+  "RequiredRuntimeModules": [],
+  "ContainerInit": true,
+  "CIExecution": "Not run; local Linux validation only",
+  "Checks": [
+    {
+      "Outcome": "Success",
+      "Name": "PublicCommand",
+      "Command": "quiet"
+    },
+    {
+      "Outcome": "Success",
+      "Name": "PublicCommand",
+      "Command": "pump"
+    },
+    {
+      "Outcome": "Success",
+      "Parameter": "OnOutput",
+      "Name": "StreamingInterface",
+      "Command": "Invoke-QuietCli"
+    },
+    {
+      "Outcome": "Success",
+      "Parameter": "OnOutput",
+      "Name": "StreamingInterface",
+      "Command": "New-QuietContract"
+    }
+  ]
+}

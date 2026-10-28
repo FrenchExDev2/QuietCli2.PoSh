@@ -1,4 +1,4 @@
-#requires -Version 7.4
+#requires -Version 7.6
 param([ValidateSet('json','malformed','fail','wait','capture','record')][string]$Mode='json')
 switch($Mode) {
     json { [Console]::Out.Write('{"Count":3}') }

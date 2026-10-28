@@ -1,0 +1,10 @@
+{
+  "SchemaVersion": 2,
+  "Outcome": "Success",
+  "FirstSHA256": "8cf2925c0c761e7ce5524d3367487367881c73c6dd7dd763190c8762f3493a42",
+  "SecondSHA256": "8cf2925c0c761e7ce5524d3367487367881c73c6dd7dd763190c8762f3493a42",
+  "Identical": true,
+  "Bytes": 9139322,
+  "Files": 109,
+  "ModulePath": "PoSh/FrenchExDev/QuietCliEcosystem/FrenchExDev.QuietCli.PoSh"
+}

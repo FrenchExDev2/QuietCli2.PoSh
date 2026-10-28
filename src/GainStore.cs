@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace QuietCliStack.GainV1 {
+namespace QuietCliStack.GainV2 {
     // SQLite's stable C API. No CLI, NuGet download, or dependency on another module.
     // https://www.sqlite.org/c3ref/open.html
     // https://www.sqlite.org/c3ref/bind_blob.html
@@ -18,6 +18,8 @@ namespace QuietCliStack.GainV1 {
             string[] candidates = OperatingSystem.IsWindows() ? new[] { "winsqlite3.dll", "sqlite3.dll" } :
                 OperatingSystem.IsMacOS() ? new[] { "/usr/lib/libsqlite3.dylib", "libsqlite3.dylib" } :
                 new[] { "libsqlite3.so.0", "libsqlite3.so" };
+            string bundled = Path.Combine(Database.NativeDirectory, OperatingSystem.IsWindows() ? "e_sqlite3.dll" : OperatingSystem.IsMacOS() ? "libe_sqlite3.dylib" : "libe_sqlite3.so");
+            if (NativeLibrary.TryLoad(bundled, out IntPtr bundledHandle)) return bundledHandle;
             foreach (string candidate in candidates)
                 if (NativeLibrary.TryLoad(candidate, out IntPtr handle)) return handle;
             throw new DllNotFoundException("QuietCli requires the system SQLite library (winsqlite3 or libsqlite3).");
@@ -44,6 +46,7 @@ namespace QuietCliStack.GainV1 {
     }
 
     public sealed class Database : IDisposable {
+        public static string NativeDirectory = "";
         IntPtr db;
         public Database(string path, bool create) {
             try {
@@ -52,7 +55,7 @@ namespace QuietCliStack.GainV1 {
                 Check(Sqlite.sqlite3_open_v2(path, out db, (create ? 6 : 1) | 0x10000, IntPtr.Zero));
                 Check(Sqlite.sqlite3_busy_timeout(db, 2000));
                 long version = (long)Query("PRAGMA user_version", Array.Empty<object>())[0]["user_version"];
-                if (version > 1) throw new InvalidOperationException("Unsupported QuietCli gain database schema.");
+                if (version > 2) throw new InvalidOperationException("Unsupported QuietCli gain database schema.");
                 if (create && version == 0) {
                     Execute("BEGIN IMMEDIATE", Array.Empty<object>());
                     try {
@@ -71,8 +74,17 @@ namespace QuietCliStack.GainV1 {
                         Execute("PRAGMA user_version = 1", Array.Empty<object>());
                         Execute("COMMIT", Array.Empty<object>());
                     } catch { Execute("ROLLBACK", Array.Empty<object>()); throw; }
-                } else if (!create && version != 1) {
+                } else if (!create && version != 1 && version != 2) {
                     throw new InvalidOperationException("Not a supported QuietCli gain database.");
+                }
+                            if (create && version < 2) {
+                    Execute("BEGIN IMMEDIATE", Array.Empty<object>());
+                    try {
+                        Execute("CREATE TABLE IF NOT EXISTS quietcli_v2_events (id TEXT PRIMARY KEY, kind TEXT NOT NULL, timestamp_ms INTEGER NOT NULL, command TEXT NOT NULL, payload TEXT NOT NULL)", Array.Empty<object>());
+                        Execute("CREATE INDEX IF NOT EXISTS quietcli_v2_kind_time ON quietcli_v2_events(kind,timestamp_ms)", Array.Empty<object>());
+                        Execute("PRAGMA user_version = 2", Array.Empty<object>());
+                        Execute("COMMIT", Array.Empty<object>());
+                    } catch { Execute("ROLLBACK", Array.Empty<object>()); throw; }
                 }
             } catch { Dispose(); throw; }
         }
@@ -86,6 +98,7 @@ namespace QuietCliStack.GainV1 {
                 Check(Sqlite.sqlite3_prepare_v2(db, sql, -1, out statement, IntPtr.Zero));
                 for (int i = 0; i < values.Length; i++) {
                     object value = values[i]; int code;
+                if (value is not null && value.GetType().FullName == "System.Management.Automation.PSObject") value = value.GetType().GetProperty("BaseObject").GetValue(value);
                     if (value == null) code = Sqlite.sqlite3_bind_null(statement, i + 1);
                     else if (value is string text) {
                         byte[] bytes = Encoding.UTF8.GetBytes(text + "\0");

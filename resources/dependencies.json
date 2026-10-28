@@ -1,0 +1,65 @@
+{
+  "Files": [
+    {
+      "Path": "resources/runtime/Google.Protobuf.dll",
+      "SHA256": "B71BE7A4E721D1B79456A0B52602A01A4414EB09BAB4A04400F6F9D8A3895157"
+    },
+    {
+      "Path": "resources/runtime/Microsoft.Bcl.Memory.dll",
+      "SHA256": "16AF18CC22C8E3F492DEB373A92C732357D9A04430EB7058E98AC6B6853F9E78"
+    },
+    {
+      "Path": "resources/runtime/Microsoft.ML.Tokenizers.Data.Cl100kBase.dll",
+      "SHA256": "A1AAD30FA79231557B9A32D2BD01EACF4D6E83E0F3AF56C161809BC5AA859232"
+    },
+    {
+      "Path": "resources/runtime/Microsoft.ML.Tokenizers.Data.O200kBase.dll",
+      "SHA256": "67DD727D73D87D46E6F12259B0DAA733F596D609212D47E54AEA1E3517D18C46"
+    },
+    {
+      "Path": "resources/runtime/Microsoft.ML.Tokenizers.dll",
+      "SHA256": "04B9CB9A6BCE333071E071C6735A8914BB55E1EA1F197707ED71BF4CABF6CA77"
+    },
+    {
+      "Path": "resources/runtime/runtimes/linux-arm64/native/libe_sqlite3.so",
+      "SHA256": "707FFF6B18C1F083158E7A543C8D2545D5485F547FFD96DB29679A95F52878D5"
+    },
+    {
+      "Path": "resources/runtime/runtimes/linux-musl-arm64/native/libe_sqlite3.so",
+      "SHA256": "530E2F74F259FE04FAA4B595336E671FAB5EEDBB6F4E94DAD59494EFB7B00C2A"
+    },
+    {
+      "Path": "resources/runtime/runtimes/linux-musl-x64/native/libe_sqlite3.so",
+      "SHA256": "647B7B5886526691AED58E0FCBB56DC1E6DEA8B1F9F5390782F0C95269250DB1"
+    },
+    {
+      "Path": "resources/runtime/runtimes/linux-x64/native/libe_sqlite3.so",
+      "SHA256": "B0F5C48026FEDCF9F05CF31C6FADF9E1E001CA59CD85AA68B8B6814E52C18A07"
+    },
+    {
+      "Path": "resources/runtime/runtimes/osx-arm64/native/libe_sqlite3.dylib",
+      "SHA256": "09FE20A6C050912A7944B2F2F2981DEBE31679F7919F523C87251AE8CF0F2DAA"
+    },
+    {
+      "Path": "resources/runtime/runtimes/osx-x64/native/libe_sqlite3.dylib",
+      "SHA256": "02344E1D0BCB5ED447AD9B79ED19E37A590FB1ECE3EBA1E63EFBC35E36E47BDF"
+    },
+    {
+      "Path": "resources/runtime/runtimes/win-arm64/native/e_sqlite3.dll",
+      "SHA256": "4177542756BD94F75B55FB74367E0CF34E66A88FFAF95755489AF14C6CA2F792"
+    },
+    {
+      "Path": "resources/runtime/runtimes/win-x64/native/e_sqlite3.dll",
+      "SHA256": "B7385D722C83FB52142A00477A726723745916D22A555711EE89834C1111FB2E"
+    }
+  ],
+  "SchemaVersion": 1,
+  "Packages": {
+    "microsoft.ml.tokenizers.data.o200kbase": "2.0.0",
+    "microsoft.ml.tokenizers.data.cl100kbase": "2.0.0",
+    "google.protobuf": "3.30.2",
+    "microsoft.bcl.memory": "9.0.14",
+    "microsoft.ml.tokenizers": "2.0.0",
+    "sqlitepclraw.lib.e_sqlite3": "2.1.13"
+  }
+}

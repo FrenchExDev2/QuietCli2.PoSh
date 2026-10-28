@@ -1,0 +1,63 @@
+{
+  "SchemaVersion": 2,
+  "ObservedUtc": "2026-10-28T16:56:18.8430212+00:00",
+  "Scope": "Local canonical sources, module manifests and workflow-only archive inventory",
+  "Modules": [
+    {
+      "RequiredModules": [],
+      "Version": "2.0.0",
+      "Name": "FrenchExDev.QuietCli.PoSh"
+    },
+    {
+      "RequiredModules": [
+        "FrenchExDev.QuietCli.PoSh"
+      ],
+      "Version": "1.0.0",
+      "Name": "FrenchExDev.QuietCli.Git.PoSh"
+    }
+  ],
+  "ArchiveInventory": {
+    "Mode": "InventoryOnly",
+    "ConsumerModulesIncluded": false,
+    "Outcome": "Success",
+    "Files": 95
+  },
+  "WorkspaceModuleCopies": 0,
+  "WorkspaceArchives": 0,
+  "Workflows": [
+    {
+      "Path": "/workspace/.github/workflows/quietcli.yml",
+      "Jobs": [
+        "linux",
+        "release-assets",
+        "runtime",
+        "gallery"
+      ],
+      "PowerShellSyntaxErrors": 0,
+      "GalleryModulePath": true
+    },
+    {
+      "Path": "/workspace/PoSh/FrenchExDev/QuietCliEcosystem/FrenchExDev.QuietCli.PoSh/.github/workflows/quietcli.yml",
+      "Jobs": [
+        "linux",
+        "release-assets",
+        "runtime",
+        "gallery"
+      ],
+      "PowerShellSyntaxErrors": 0,
+      "GalleryModulePath": true
+    }
+  ],
+  "RemoteCIExecuted": false,
+  "PSGalleryPublicationExecuted": false,
+  "RequiredGitHubConfiguration": [
+    "QUIETCLI_LINUX_IMAGE",
+    "PSGALLERY_API_KEY"
+  ],
+  "PreservedHistoricalArchives": 1,
+  "LegacyReferenceFiles": 0,
+  "LegacyReferencePaths": 0,
+  "LegacyReferenceArchiveEntries": 1,
+  "TextFilesChecked": 108,
+  "ReferenceSearchMethod": "In-container PowerShell and .NET scan; rg is unavailable"
+}

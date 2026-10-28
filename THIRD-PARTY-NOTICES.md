@@ -1,0 +1,2 @@
+# Runtime dependencies
+Pinned package metadata, license texts and upstream notices are under third_party/. Shipped file SHA-256 values are in resources/dependencies.json. Runtime C# sources are compiled by PowerShell; PowerShell module dependencies are declared by the package manifests.

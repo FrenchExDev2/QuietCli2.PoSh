@@ -1,0 +1,10 @@
+{
+  "PowerShell": "7.6.7",
+  "Failures": [],
+  "SchemaVersion": 2,
+  "Hash": "A9004E04DB61BE987B20AE6A6ABF73515117FF4BAC56F992B08C314C4C03C355",
+  "LiveTestsRun": false,
+  "Success": true,
+  "Checks": 15,
+  "Platform": "Alpine Linux v3.24"
+}

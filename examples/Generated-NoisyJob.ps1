@@ -1,4 +1,4 @@
-#requires -Version 7.4
+#requires -Version 7.6
 #requires -PSEdition Core
 [CmdletBinding()]
 param([string]$Python='python3', [ValidateRange(1,100000)][int]$Records=2000,
@@ -16,7 +16,7 @@ Invoke-QuietTask -MaxOutputBytes $MaxOutputBytes -AsJson -ArgumentList @($Python
         $state=@{Stage=$stage;Observed=0L;Reported=$null;Done=$false;Diagnostics=0L}
         $result=Invoke-QuietStep -Name $stage -ScriptBlock {
             Invoke-QuietCli -FilePath $python -ArgumentList @($fixture,'--stage',$stage,'--records',[string]$records) `
-                -TimeoutSeconds 60 -Summary "Stage $stage processed locally." -State $state -OnRecord {
+                -TimeoutSeconds 60 -Summary "Stage $stage processed locally." -State $state -OnOutput {
                     param($record,$state)
                     if ($record.Truncated) { return }
                     if ($record.Stream -eq 'stderr') { $state.Diagnostics++;return }

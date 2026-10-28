@@ -1,0 +1,370 @@
+{
+  "SourceSHA256": {
+    "Agent.ps1": "D0A8F2B1472B8B2EBC790F6AE1833CE1D9BCEBCFC617B587135DD96823058B42",
+    "CommandLine.ps1": "A78D3B84361B27686A1B5ACB8392AC9938C6BF472874E294382F43784651F009",
+    "Configuration.ps1": "CEF02466202E3ADB23ABA146638A0BBE7B3EB54591E92C9AD04F6682A30F77DF",
+    "Contract.ps1": "51FFF64EBBBF377C4372CEDCC9ADA3D1B46581EC21517393B19774ADBB7B92F1",
+    "Execution.ps1": "CB9478E09BDC4E3AAF095B8B3803388A3E5D37F2913FE51B61ED259A4A96B207",
+    "Gain.ps1": "AAB34CA75F32C5B333F02FBAA2F7A3C05A19C629FC38D4CAAB8AA9CE1A07A395",
+    "GainStore.cs": "1CFD2C3851DB2F0281B0A23FA47CE4C60FC7EEA63B6651A994FFCCF46483A7E1",
+    "Module.ps1": "4F31141F62AD4C2E039FBCF17B4E193C5B4C46952C55AA027E7214A785F03EEB",
+    "NativeSession.cs": "8B58B16C44CB7BEC08F08E51C6067AF322B80062051FB72708D2B7E6D62A5C50",
+    "QuietCli.psd1": "FBE689F15BAE2DD48CC8A5D4C9511D2F239FE998D06EF83EBB96AE90B6019AF7",
+    "QuietCli.psm1": "429090709A7592E63369D31B124BA485FCCDB1481BEDB6F97554A5A0736F5FF5",
+    "Record.ps1": "7F9E859B82D93B1F2090C0B27998E2EAFC5FFE99A050DA57D4A6F2B2B68EAA53",
+    "Result.ps1": "D2A0AB4A3011224CE5A9B5198CED6B0DC55D918A4C6F30FDC513C1480C3BE571"
+  },
+  "Groups": [
+    {
+      "Case": "2000, False, o200k_base",
+      "Samples": 2,
+      "MedianMs": 881.2034,
+      "MaxMs": 936.7464,
+      "MinMs": 825.6604
+    },
+    {
+      "Case": "2000, False, off",
+      "Samples": 2,
+      "MedianMs": 848.70165,
+      "MaxMs": 871.7861,
+      "MinMs": 825.6172
+    },
+    {
+      "Case": "2000, True, o200k_base",
+      "Samples": 2,
+      "MedianMs": 1565.33375,
+      "MaxMs": 1576.3982,
+      "MinMs": 1554.2693
+    },
+    {
+      "Case": "2000, True, off",
+      "Samples": 2,
+      "MedianMs": 1818.9349,
+      "MaxMs": 1846.181,
+      "MinMs": 1791.6888
+    },
+    {
+      "Case": "20000, False, o200k_base",
+      "Samples": 2,
+      "MedianMs": 5281.28275,
+      "MaxMs": 5283.6668,
+      "MinMs": 5278.8987
+    },
+    {
+      "Case": "20000, False, off",
+      "Samples": 2,
+      "MedianMs": 5251.2197,
+      "MaxMs": 5259.4554,
+      "MinMs": 5242.984
+    },
+    {
+      "Case": "20000, True, o200k_base",
+      "Samples": 2,
+      "MedianMs": 14926.276249999999,
+      "MaxMs": 14997.77,
+      "MinMs": 14854.7825
+    },
+    {
+      "Case": "20000, True, off",
+      "Samples": 2,
+      "MedianMs": 13772.500499999998,
+      "MaxMs": 13882.7118,
+      "MinMs": 13662.2892
+    }
+  ],
+  "ExecutedAtUtc": "2026-10-28T00:22:14.5268845+00:00",
+  "Samples": [
+    {
+      "Warmup": true,
+      "Measurement": "CounterUnavailable",
+      "Record": false,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 142,
+      "Sample": 0,
+      "ElapsedMs": 1391.4868
+    },
+    {
+      "Warmup": false,
+      "Measurement": "CounterUnavailable",
+      "Record": false,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 142,
+      "Sample": 1,
+      "ElapsedMs": 871.7861
+    },
+    {
+      "Warmup": false,
+      "Measurement": "CounterUnavailable",
+      "Record": false,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 142,
+      "Sample": 2,
+      "ElapsedMs": 825.6172
+    },
+    {
+      "Warmup": true,
+      "Measurement": "Measured",
+      "Record": false,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 142,
+      "Sample": 0,
+      "ElapsedMs": 1202.4129
+    },
+    {
+      "Warmup": false,
+      "Measurement": "Measured",
+      "Record": false,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 142,
+      "Sample": 1,
+      "ElapsedMs": 936.7464
+    },
+    {
+      "Warmup": false,
+      "Measurement": "Measured",
+      "Record": false,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 142,
+      "Sample": 2,
+      "ElapsedMs": 825.6604
+    },
+    {
+      "Warmup": true,
+      "Measurement": "CounterUnavailable",
+      "Record": true,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 168,
+      "Sample": 0,
+      "ElapsedMs": 1830.6784
+    },
+    {
+      "Warmup": false,
+      "Measurement": "CounterUnavailable",
+      "Record": true,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 168,
+      "Sample": 1,
+      "ElapsedMs": 1846.181
+    },
+    {
+      "Warmup": false,
+      "Measurement": "CounterUnavailable",
+      "Record": true,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 168,
+      "Sample": 2,
+      "ElapsedMs": 1791.6888
+    },
+    {
+      "Warmup": true,
+      "Measurement": "Measured",
+      "Record": true,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 168,
+      "Sample": 0,
+      "ElapsedMs": 1588.773
+    },
+    {
+      "Warmup": false,
+      "Measurement": "Measured",
+      "Record": true,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 168,
+      "Sample": 1,
+      "ElapsedMs": 1576.3982
+    },
+    {
+      "Warmup": false,
+      "Measurement": "Measured",
+      "Record": true,
+      "Observed": 2000,
+      "Records": 2000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 168,
+      "Sample": 2,
+      "ElapsedMs": 1554.2693
+    },
+    {
+      "Warmup": true,
+      "Measurement": "CounterUnavailable",
+      "Record": false,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 144,
+      "Sample": 0,
+      "ElapsedMs": 5290.5935
+    },
+    {
+      "Warmup": false,
+      "Measurement": "CounterUnavailable",
+      "Record": false,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 144,
+      "Sample": 1,
+      "ElapsedMs": 5259.4554
+    },
+    {
+      "Warmup": false,
+      "Measurement": "CounterUnavailable",
+      "Record": false,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 144,
+      "Sample": 2,
+      "ElapsedMs": 5242.984
+    },
+    {
+      "Warmup": true,
+      "Measurement": "Measured",
+      "Record": false,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 144,
+      "Sample": 0,
+      "ElapsedMs": 5265.7429
+    },
+    {
+      "Warmup": false,
+      "Measurement": "Measured",
+      "Record": false,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 144,
+      "Sample": 1,
+      "ElapsedMs": 5283.6668
+    },
+    {
+      "Warmup": false,
+      "Measurement": "Measured",
+      "Record": false,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 144,
+      "Sample": 2,
+      "ElapsedMs": 5278.8987
+    },
+    {
+      "Warmup": true,
+      "Measurement": "CounterUnavailable",
+      "Record": true,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 170,
+      "Sample": 0,
+      "ElapsedMs": 12903.7144
+    },
+    {
+      "Warmup": false,
+      "Measurement": "CounterUnavailable",
+      "Record": true,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 170,
+      "Sample": 1,
+      "ElapsedMs": 13662.2892
+    },
+    {
+      "Warmup": false,
+      "Measurement": "CounterUnavailable",
+      "Record": true,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "off",
+      "CaptureComplete": true,
+      "DeliveredBytes": 170,
+      "Sample": 2,
+      "ElapsedMs": 13882.7118
+    },
+    {
+      "Warmup": true,
+      "Measurement": "Measured",
+      "Record": true,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 170,
+      "Sample": 0,
+      "ElapsedMs": 13769.9461
+    },
+    {
+      "Warmup": false,
+      "Measurement": "Measured",
+      "Record": true,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 170,
+      "Sample": 1,
+      "ElapsedMs": 14997.77
+    },
+    {
+      "Warmup": false,
+      "Measurement": "Measured",
+      "Record": true,
+      "Observed": 20000,
+      "Records": 20000,
+      "Tokenizer": "o200k_base",
+      "CaptureComplete": true,
+      "DeliveredBytes": 170,
+      "Sample": 2,
+      "ElapsedMs": 14854.7825
+    }
+  ],
+  "Platform": "Alpine Linux v3.24",
+  "Note": "Fresh native PowerShell child per sample; first sample per case excluded. This is a local workload measurement, not an overall speedup claim.",
+  "PowerShell": "7.6.7",
+  "SchemaVersion": 2
+}

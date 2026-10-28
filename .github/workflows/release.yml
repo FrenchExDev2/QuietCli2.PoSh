@@ -1,0 +1,118 @@
+name: Release QuietCli
+
+'on':
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quietcli-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/quietcli.yml
+
+  package:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: ${{ vars.QUIETCLI_LINUX_IMAGE }}
+      options: --init
+    defaults:
+      run:
+        shell: pwsh -NoLogo -NoProfile -File {0}
+    env:
+      MODULE_DIR: ${{ needs.test.outputs.module-dir }}
+      RELEASE_TAG: ${{ github.ref_name }}
+      POWERSHELL_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: QuietCli-distribution
+          path: ${{ runner.temp }}/quietcli-release
+      - name: Build and verify the Gallery package from the tested ZIP
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:GITHUB_WORKSPACE $env:MODULE_DIR
+          $assets = Join-Path $env:RUNNER_TEMP 'quietcli-release'
+          & (Join-Path $root 'scripts/Test-QuietCliRelease.ps1') -Tag $env:RELEASE_TAG -ModuleRoot $root | ConvertTo-Json -Compress
+          if (!(Get-Module -ListAvailable Microsoft.PowerShell.PSResourceGet | Where-Object Version -EQ '1.2.0')) {
+            Install-PSResource -Name Microsoft.PowerShell.PSResourceGet -Version '1.2.0' -Repository PSGallery -Scope CurrentUser -TrustRepository
+          }
+          Import-Module Microsoft.PowerShell.PSResourceGet -RequiredVersion 1.2.0 -ErrorAction Stop
+          & (Join-Path $root 'scripts/New-QuietCliPackage.ps1') -ArchivePath (Join-Path $assets 'QuietCli.zip') -ManifestPath (Join-Path $assets 'QuietCli.manifest.json') -OutputDirectory $assets -Tag $env:RELEASE_TAG
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QuietCli-release
+          path: ${{ runner.temp }}/quietcli-release/*
+          if-no-files-found: error
+
+  publish:
+    needs: [test, package]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    container:
+      image: ${{ vars.QUIETCLI_LINUX_IMAGE }}
+      options: --init
+    defaults:
+      run:
+        shell: pwsh -NoLogo -NoProfile -File {0}
+    env:
+      MODULE_DIR: ${{ needs.test.outputs.module-dir }}
+      RELEASE_TAG: ${{ github.ref_name }}
+      POWERSHELL_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: QuietCli-release
+          path: ${{ runner.temp }}/quietcli-release
+      - name: Publish the verified package to PowerShell Gallery
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = Join-Path $env:GITHUB_WORKSPACE $env:MODULE_DIR
+          $assets = Join-Path $env:RUNNER_TEMP 'quietcli-release'
+          $manifest = Get-Content (Join-Path $assets 'QuietCli.manifest.json') -Raw | ConvertFrom-Json
+          if (!(Get-Module -ListAvailable Microsoft.PowerShell.PSResourceGet | Where-Object Version -EQ '1.2.0')) {
+            Install-PSResource -Name Microsoft.PowerShell.PSResourceGet -Version '1.2.0' -Repository PSGallery -Scope CurrentUser -TrustRepository
+          }
+          & (Join-Path $root 'scripts/Publish-QuietCliPackage.ps1') -PackagePath (Join-Path $assets $manifest.PackageFile) -ManifestPath (Join-Path $assets 'QuietCli.manifest.json') -ModuleRoot $root -Tag $env:RELEASE_TAG -Confirm:$false
+      - name: Create the GitHub release and attach the verified assets
+        uses: actions/github-script@v7
+        env:
+          ASSET_DIRECTORY: ${{ runner.temp }}/quietcli-release
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const crypto = require('crypto');
+            const directory = process.env.ASSET_DIRECTORY;
+            const manifest = JSON.parse(fs.readFileSync(path.join(directory, 'QuietCli.manifest.json'), 'utf8'));
+            const tag = context.ref.replace(/^refs\/tags\//, '');
+            if (tag !== 'v' + manifest.ModuleVersion || manifest.SourceRef !== tag) throw new Error('Release tag/version mismatch.');
+            const packageName = 'FrenchExDev.QuietCli.PoSh.' + manifest.ModuleVersion + '.nupkg';
+            if (manifest.PackageFile !== packageName) throw new Error('Unexpected package name.');
+            for (const [name, expected] of [['QuietCli.zip', manifest.ArchiveSHA256], [packageName, manifest.PackageSHA256]]) {
+              const actual = crypto.createHash('sha256').update(fs.readFileSync(path.join(directory, name))).digest('hex');
+              if (actual !== expected.toLowerCase()) throw new Error(name + ' SHA256 mismatch.');
+            }
+            const { data: release } = await github.rest.repos.createRelease({
+              ...context.repo, tag_name: tag, name: 'QuietCli ' + tag,
+              generate_release_notes: true, draft: false, prerelease: false
+            });
+            for (const name of ['QuietCli.zip', 'QuietCli.manifest.json', packageName]) {
+              await github.rest.repos.uploadReleaseAsset({
+                ...context.repo, release_id: release.id, name,
+                data: fs.readFileSync(path.join(directory, name))
+              });
+            }

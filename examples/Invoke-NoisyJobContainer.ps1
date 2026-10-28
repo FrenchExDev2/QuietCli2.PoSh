@@ -1,4 +1,4 @@
-#requires -Version 7.4
+#requires -Version 7.6
 #requires -PSEdition Core
 [CmdletBinding()]
 param([Parameter(Mandatory)][string]$PythonImage,
@@ -18,7 +18,7 @@ Invoke-QuietTask -MaxOutputBytes $MaxOutputBytes -AsJson -ArgumentList @($Python
         $state=@{Stage=$stage;Observed=0L;Reported=$null;Done=$false;Diagnostics=0L}
         $result=Invoke-QuietStep -Name $stage -ScriptBlock {
             Invoke-QuietCli -FilePath podman -ArgumentList @('run','--rm','--pull=never','--network=none','--volume',"${fixtures}:/fixture:ro",'--entrypoint','python3',$image,'-u','/fixture/noisy-job.py','--stage',$stage,'--records',[string]$records) `
-                -TimeoutSeconds 60 -State $state -OnRecord {
+                -TimeoutSeconds 60 -State $state -OnOutput {
                     param($record,$state)
                     if($record.Truncated){return}
                     if($record.Stream -eq 'stderr'){$state.Diagnostics++;return}

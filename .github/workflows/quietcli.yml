@@ -1,6 +1,11 @@
 name: QuietCli
 
-on:
+'on':
+  workflow_call:
+    outputs:
+      module-dir:
+        description: Relative path to the canonical runtime module
+        value: ${{ jobs.linux.outputs.module-dir }}
   workflow_dispatch:
   pull_request:
   push:
@@ -9,87 +14,92 @@ permissions:
   contents: read
 
 env:
-  MODULE_DIR: .
+  POWERSHELL_TELEMETRY_OPTOUT: '1'
 
 jobs:
-  # Full suite (smoke + Python integration) directly on the hosted runners.
-  hosted:
-    name: hosted (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+  runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require the qualified Linux runtime image
+        env:
+          QUIETCLI_LINUX_IMAGE: ${{ vars.QUIETCLI_LINUX_IMAGE }}
+        shell: bash
+        run: |
+          test -n "$QUIETCLI_LINUX_IMAGE" || {
+            echo "Configure QUIETCLI_LINUX_IMAGE with a Linux image containing PowerShell 7.6+ Core and Git."
+            exit 1
+          }
+
+  linux:
+    needs: runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: ${{ vars.QUIETCLI_LINUX_IMAGE }}
+      options: --init
+    outputs:
+      module-dir: ${{ steps.module.outputs.path }}
     defaults:
       run:
-        shell: pwsh
+        shell: pwsh -NoLogo -NoProfile -File {0}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Run smoke and integration tests
+      - name: Locate canonical runtime sources
+        id: module
         run: |
-          ./${{ env.MODULE_DIR }}/test/Invoke-Tests.ps1 `
-            -Python (Get-Command python -ErrorAction Stop).Source `
-            -OutputPath '${{ runner.temp }}/quietcli-tests.json'
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Upload test report
+          $candidates = @(
+            (Join-Path $env:GITHUB_WORKSPACE 'PoSh/FrenchExDev/QuietCliEcosystem/FrenchExDev.QuietCli.PoSh'),
+            (Join-Path $env:GITHUB_WORKSPACE 'FrenchExDev.QuietCli.PoSh'),
+            $env:GITHUB_WORKSPACE
+          )
+          $root = @($candidates | Where-Object { Test-Path (Join-Path $_ 'FrenchExDev.QuietCli.PoSh.psd1') })[0]
+          if (!$root) { throw 'Canonical QuietCli runtime sources were not found.' }
+          "MODULE_DIR=$root" | Add-Content $env:GITHUB_ENV
+          "path=$([IO.Path]::GetRelativePath($env:GITHUB_WORKSPACE,$root))" | Add-Content $env:GITHUB_OUTPUT
+      - name: Verify runtime and install test dependencies
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSEdition -ne 'Core' -or $PSVersionTable.PSVersion -lt [version]'7.6') {
+            throw 'QuietCli requires PowerShell 7.6+ Core.'
+          }
+          $null = Get-Command git -ErrorAction Stop
+          foreach ($dependency in @(
+            @{ Name = 'Pester'; Version = '6.2.0' }
+            @{ Name = 'PSScriptAnalyzer'; Version = '1.25.0' }
+            @{ Name = 'powershell-yaml'; Version = '0.4.12' }
+            @{ Name = 'Microsoft.PowerShell.PSResourceGet'; Version = '1.2.0' }
+          )) {
+            if (!(Get-Module -ListAvailable $dependency.Name | Where-Object Version -EQ $dependency.Version)) {
+              Install-Module -Name $dependency.Name -RequiredVersion $dependency.Version -Scope CurrentUser -Repository PSGallery -Force
+            }
+          }
+      - name: Test runtime and canonical Git consumer
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & (Join-Path $env:MODULE_DIR 'test/Invoke-Tests.ps1') -Analyze -OutputPath (Join-Path $env:RUNNER_TEMP 'quietcli-tests.json')
+          Import-Module (Join-Path $env:MODULE_DIR 'FrenchExDev.QuietCli.PoSh.psd1') -DisableNameChecking
+          $git = Join-Path (Split-Path $env:MODULE_DIR) 'FrenchExDev.QuietCli.Git.PoSh'
+          if (Test-Path $git) {
+            $result = Test-QuietModule -Path $git -AsObject
+            if ($result.Outcome -ne 'Success') { throw ($result.Data.Failures -join '; ') }
+            $result | ConvertTo-QuietJson
+          }
+      - name: Build and verify the standalone runtime ZIP
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = Join-Path $env:RUNNER_TEMP 'quietcli-artifacts'
+          & (Join-Path $env:MODULE_DIR 'scripts/New-QuietCliArchive.ps1') -OutputDirectory $out -SourceCommitBase $env:GITHUB_SHA -SourceRef $env:GITHUB_REF_NAME
+          & (Join-Path $env:MODULE_DIR 'scripts/Verify-QuietCliArchive.ps1') -ArchivePath (Join-Path $out 'QuietCli.zip') -OutputPath (Join-Path $out 'verification.json')
+      - name: Upload verification report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: quietcli-${{ matrix.os }}
+          name: quietcli-linux-reports
           path: ${{ runner.temp }}/quietcli-tests.json
           if-no-files-found: error
-
-  # Full suite inside an Alpine (musl) container with PowerShell 7.
-  alpine:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run tests in Alpine container
-        run: |
-          mkdir -p "$RUNNER_TEMP/out"
-          docker run --rm \
-            -e MODULE_DIR -v "$GITHUB_WORKSPACE:/src" -v "$RUNNER_TEMP/out:/out" -w /src \
-            mcr.microsoft.com/dotnet/sdk:8.0-alpine \
-            sh -c 'apk add --no-cache git python3 bash jq gawk coreutils sqlite-libs >/dev/null &&
-                   git config --global --add safe.directory "*" &&
-                   pwsh -NoLogo -NoProfile -File ./$MODULE_DIR/test/Invoke-Tests.ps1 -Python python3 -OutputPath /out/quietcli-tests.json'
-        env:
-          MODULE_DIR: ${{ env.MODULE_DIR }}
-      - name: Upload test report
-        if: always()
+      - name: Upload workflow-generated distribution
         uses: actions/upload-artifact@v4
         with:
-          name: quietcli-alpine
-          path: ${{ runner.temp }}/out/quietcli-tests.json
-          if-no-files-found: error
-
-  # Runtime smoke tests inside a Windows Server Core container.
-  windows-servercore:
-    runs-on: windows-2022
-    timeout-minutes: 30
-    defaults:
-      run:
-        shell: pwsh
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run tests in Server Core container
-        run: |
-          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\out" | Out-Null
-          docker run --rm `
-            -v "${env:GITHUB_WORKSPACE}:C:\src" -v "${env:RUNNER_TEMP}\out:C:\out" -w C:\src `
-            mcr.microsoft.com/dotnet/sdk:8.0-windowsservercore-ltsc2022 `
-            pwsh -NoLogo -NoProfile -File "C:\src\${{ env.MODULE_DIR }}\test\Invoke-Tests.ps1" `
-              -RuntimeOnly -OutputPath C:\out\quietcli-tests.json
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Upload test report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: quietcli-windows-servercore
-          path: ${{ runner.temp }}/out/quietcli-tests.json
+          name: QuietCli-distribution
+          path: ${{ runner.temp }}/quietcli-artifacts/*
           if-no-files-found: error
