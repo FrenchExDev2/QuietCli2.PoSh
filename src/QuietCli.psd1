@@ -1,6 +1,6 @@
 ﻿@{
     RootModule = 'QuietCli.psm1'
-    ModuleVersion = '2.0.0'
+    ModuleVersion = '0.0.1'
     GUID = '00f8c051-c3c6-47c3-9ee0-2f595d73578c'
     Author = 'Stéphane Érard / AI-assisted prototype'
     Description = 'Companion scripts that reduce native CLI output into bounded structured results.'

@@ -93,7 +93,7 @@ Export-ModuleMember -Function __FACTORY__
         $runtimeManifest=Import-PowerShellDataFile (Join-Path $script:QuietRoot 'FrenchExDev.QuietCli.PoSh.psd1')
         $manifestData=@{RootModule="$Name.psm1";ModuleVersion=[string]$Version;GUID=[string]$guid;Author=$runtimeManifest.Author;CompanyName=$runtimeManifest.CompanyName;Copyright=$runtimeManifest.Copyright;Description=('Documented '+$Command+' contracts for QuietCli.');PowerShellVersion='7.6'
             CompatiblePSEditions=@('Core');FunctionsToExport=@($factory);CmdletsToExport=@();AliasesToExport=@();VariablesToExport=@()
-            RequiredModules=@(@{ModuleName='FrenchExDev.QuietCli.PoSh';ModuleVersion='2.0.0'})
+            RequiredModules=@(@{ModuleName='FrenchExDev.QuietCli.PoSh';ModuleVersion=[string]$runtimeManifest.ModuleVersion})
             PrivateData=@{PSData=@{Tags=@('QuietCli',$Command,'PowerShell7');ProjectUri=$runtimeManifest.PrivateData.PSData.ProjectUri;LicenseUri=$runtimeManifest.PrivateData.PSData.LicenseUri};QuietCli=@{SchemaVersion=2;Command=$Command;Contracts=$files;Assertions=$assertions;LiveTests=$live;Factory=$factory}}}
         $manifest=Join-Path $staging "$Name.psd1"
         [IO.File]::WriteAllText($manifest,(ConvertTo-QuietDataLiteral $manifestData),[Text.UTF8Encoding]::new($false))
